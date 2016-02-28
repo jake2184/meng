@@ -1,0 +1,5 @@
+Organization ID gqn7ig
+Device Type pi
+Device ID drone
+Authentication Method token
+Authentication Token cffp&cul&Aa1w@?K0n

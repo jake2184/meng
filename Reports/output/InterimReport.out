@@ -1,0 +1,35 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Project Specification}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Motivation}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Deliverables}{section.2}% 4
+\BOOKMARK [3][-]{subsubsection.2.2.1}{Drone}{subsection.2.2}% 5
+\BOOKMARK [3][-]{subsubsection.2.2.2}{Cloud Services}{subsection.2.2}% 6
+\BOOKMARK [1][-]{section.3}{Background}{}% 7
+\BOOKMARK [2][-]{subsection.3.1}{Cloud Services}{section.3}% 8
+\BOOKMARK [3][-]{subsubsection.3.1.1}{Providers}{subsection.3.1}% 9
+\BOOKMARK [3][-]{subsubsection.3.1.2}{Architectural Advantages}{subsection.3.1}% 10
+\BOOKMARK [1][-]{section.4}{Implementation Plan}{}% 11
+\BOOKMARK [2][-]{subsection.4.1}{Christmas Milestone}{section.4}% 12
+\BOOKMARK [2][-]{subsection.4.2}{Easter Milestone}{section.4}% 13
+\BOOKMARK [2][-]{subsection.4.3}{Summer Milestone}{section.4}% 14
+\BOOKMARK [3][-]{subsubsection.4.3.1}{Optimisation}{subsection.4.3}% 15
+\BOOKMARK [3][-]{subsubsection.4.3.2}{Evaluation}{subsection.4.3}% 16
+\BOOKMARK [2][-]{subsection.4.4}{Services Being Used}{section.4}% 17
+\BOOKMARK [3][-]{subsubsection.4.4.1}{Bluemix Overview}{subsection.4.4}% 18
+\BOOKMARK [3][-]{subsubsection.4.4.2}{Central Server}{subsection.4.4}% 19
+\BOOKMARK [3][-]{subsubsection.4.4.3}{Database}{subsection.4.4}% 20
+\BOOKMARK [3][-]{subsubsection.4.4.4}{MQTT Communication}{subsection.4.4}% 21
+\BOOKMARK [3][-]{subsubsection.4.4.5}{Visual Recognition}{subsection.4.4}% 22
+\BOOKMARK [3][-]{subsubsection.4.4.6}{Speech To Text}{subsection.4.4}% 23
+\BOOKMARK [3][-]{subsubsection.4.4.7}{Tone Analyser}{subsection.4.4}% 24
+\BOOKMARK [1][-]{section.5}{Fallbacks and Expansions}{}% 25
+\BOOKMARK [2][-]{subsection.5.1}{Fallbacks}{section.5}% 26
+\BOOKMARK [2][-]{subsection.5.2}{Expansion}{section.5}% 27
+\BOOKMARK [2][-]{subsection.5.3}{Potential Future Expansions}{section.5}% 28
+\BOOKMARK [1][-]{section.6}{Evaluation Plan}{}% 29
+\BOOKMARK [2][-]{subsection.6.1}{Scenarios}{section.6}% 30
+\BOOKMARK [1][-]{section.7}{Appendices}{}% 31
+\BOOKMARK [2][-]{subsection.7.1}{Drone Hardware Components}{section.7}% 32
+\BOOKMARK [3][-]{subsubsection.7.1.1}{To Be Purchased}{subsection.7.1}% 33
+\BOOKMARK [2][-]{subsection.7.2}{Code Documentation}{section.7}% 34
+\BOOKMARK [2][-]{subsection.7.3}{Further Reading}{section.7}% 35

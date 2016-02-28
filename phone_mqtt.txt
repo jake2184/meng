@@ -1,0 +1,5 @@
+Organization ID gqn7ig
+Device Type Android
+Device ID phone
+Authentication Method token
+Authentication Token s2CUIYe*OAmM*4s0o5
