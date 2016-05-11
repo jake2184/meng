@@ -1,0 +1,30 @@
+toDoOnPi:
+
+APT-GET INSTALL:
+
+libopencore-armnb-dev
+libopencore-armwb-dev
+python-pyaudio
+python-dev
+
+
+
+FFMPEG:
+wget https://github.com/ccrisan/motioneye/wiki/precompiled/ffmpeg_2.8.3.git325b593-1_armhf.deb
+dpkg -i ffmpeg_2.8.3.git325b593-1_armhf.deb
+
+
+DRONE_PI:
+git clone https://github.com/jake2184/drone_pi.git
+
+
+PIP:
+apt-get remove python-pip
+easy_install pip
+pip install ibmiotf
+pip install pymavlink
+pip install speedtest-cli
+pip install grovepi
+
+WIFI:
+edit /etc/wpa-supplicant/wpa-supplicant.conf

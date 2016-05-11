@@ -7,6 +7,7 @@ CREATE TABLE "USERS"
   "last_name" VARCHAR(20),
   "salt" VARCHAR(8) NOT NULL,
   "password" VARCHAR(64) NOT NULL,
+  "role" INT NOT NULL,
   CONSTRAINT "primary_key" PRIMARY KEY ("username")
 ) ORGANIZE BY ROW;
 
@@ -17,4 +18,14 @@ CREATE TABLE "PERMISSIONS"
 	"permission" INT NOT NULL,
 	CONSTRAINT "username_key" FOREIGN KEY ("username") REFERENCES USERS("username")
 
+) ORGANIZE BY ROW;
+
+
+CREATE TABLE "DRONES"
+(
+  "name" VARCHAR(20) NOT NULL,
+  "model" VARCHAR(20),
+  "owner" VARCHAR(20) NOT NULL,
+  CONSTRAINT "primary_key" PRIMARY KEY ("name"),
+  CONSTRAINT "owner_key" FOREIGN KEY ("owner") REFERENCES USERS("username")
 ) ORGANIZE BY ROW;

@@ -1,0 +1,228 @@
+\documentclass{article}
+\usepackage{geometry}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{titlesec}
+
+\setcounter{secnumdepth}{4}
+\titleformat{\paragraph}
+{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+\titlespacing*{\paragraph}
+{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+\renewcommand{\familydefault}{\sfdefault}
+\geometry{a4paper, portrait, margin=2.5cm}
+\def\labelitemi{--}
+\hyphenchar\font=-1
+\graphicspath{{images/}}
+
+
+
+\begin{document}
+
+\begin{titlepage}
+                % \newgeometry{top=25mm,bottom=25mm,left=38mm,right=32mm}
+                \setlength{\parindent}{0pt}
+                \setlength{\parskip}{0pt}
+                % \fontfamily{phv}\selectfont
+
+                {
+                                \Large
+                                \raggedright
+                                Imperial College London\\[17pt]
+                                Department of Electrical and Electronic Engineering\\[17pt]
+                                Final Year Project Report 2014\\[17pt]
+ 
+                }
+
+                \rule{\columnwidth}{3pt}
+                \vfill
+                \centering
+                
+                \vfill
+                \setlength{\tabcolsep}{0pt}
+
+                \begin{tabular}{p{40mm}p{\dimexpr\columnwidth-40mm}}
+                                Project Title: & \textbf{Drone AI Stuff} \\[12pt]
+                                Student: & \textbf{Jake Reynolds} \\[12pt]
+                                CID: & \textbf{00737758} \\[12pt]
+                                Course: & \textbf{EIE4} \\[12pt]
+                                Project Supervisor: & \textbf{Dr Christos Bouganis} \\[12pt]
+                                Second Marker: & \textbf{Dr Edward Stott} \\
+                \end{tabular}
+\end{titlepage}
+
+\title{MEng Individual Project Final Report}
+\author{Jake Reynolds}
+
+\maketitle
+
+\tableofcontents
+
+
+\section{Introduction}
+Talk about
+
+
+\section{Project Specification}
+As defined in Interim Report  \
+
+This project is intended to deliver a system comprising of two main components, the drone and cloud services. The purpose of the drone is to act as a data collector and system actuator, whilst the cloud services combines a variety of data analytical services to inspect the data from the drone and issue appropriate commands.
+
+\subsection{Deliverables}
+This project is intended to deliver a system comprising of two main components, the drone and cloud services. The purpose of the drone is to act as a data collector and system actuator, whilst the cloud services combines a variety of data analytical services to inspect the data from the drone and issue appropriate commands.
+\subsubsection{Drone}
+The `drone' is a self-contained unit consisting of a quadcopter drone frame, being assembled by myself, with an autopilot device attached. This device allows simpler control of the drone, as well as added functionality such as `hover', but despite the name does not provide autonomous flying and navigation. This autopilot can be controlled either via remote, as is typical of drones, or via direct connection through a set of telemetry IO pins. In my `drone', these  will be connected to a Raspberry Pi's GPIO pins, and the Pi is to be carried as a drone payload. The Pi can therefore send signals to the drone autopilot in a similar manner to a remote control, for instance sending the `up' command.
+
+\vspace{\baselineskip} \noindent
+The Raspberry Pi will be connected to the internet, initially via a WiFi connection, however this may be changed to a 3G link depending on the requirements of the connection and the level of data transfer. This link provides access to Bluemix, through the HTTP and MQTT protocols. The HTTP connection provides a large data upload link to Bluemix, for example images and audio recordings. This connection is made on a file-by-file basis. The MQTT protocol is different; as it is based on a publisher/subscriber model, it requires a `stay alive' connection to be established initially. Its purpose is to allow movement commands to be pushed to the Pi from Bluemix. Small-size status data will be sent from the Pi to Bluemix, such as GPS coordinates, but it has not yet been established if this will be via the MQTT or HTTP protocols.
+
+\vspace{\baselineskip} \noindent
+The Pi will be capable of a variety of data collection methods, however the primary one will be `vision', in the form of a Raspberry PiCam. This is a small, very compact camera connected via a dedicated ribbon cable to the Pi board. It is capable of still images with a resolution of 2592x1944, or video at 1920x1080. In this project I will be using still images, as this allows use of image recognition services which currently don't support video. The secondary data collection method will be audio, collected via an external microphone. Other planned data sources also include temperature and drone location, with both GPS coordinates and altitude.
+
+\subsubsection{Cloud Services}
+For reasons explained in further detail within the Background section, the IBM Bluemix platform was chosen to be the primary provider of the cloud services. The `cloud services' deliverable will consist of a system or application which is run in the cloud on a remote server. As stated, this will be run on Bluemix with the application having its own designated domain, currently http://drone-nodes.eu-gb.mybluemix.net/, through which the HTTP REST requests will occur. The server will receive the data uploaded from the drone, and will store it, process it, and return feedback. The central component running on the server will be written in Node.js. The `intelligence', which decides how to reacts to the analysis the services provide, will be written as a Node.js component running on the server.
+
+\vspace{\baselineskip} \noindent
+Bluemix services, all provided by IBM, that are expected to be used in the deliverable include:
+\begin{itemize}
+    \item Cloudant Database. This is a noSQL database built on top of CouchDB. This will be used to store all data, whether raw images from the camera or the results of analysis.
+    \item Internet Of Things Foundation. This is a wrapper around an MQTT broker, providing the publisher/subscriber control.
+    \item Visual Recognition. Service that takes as input uploaded images and returns a set of labels with associated probability values, which aim to describe what the image depicts.
+    \item Speech To Text. A service based on a neural network that analyses input audio and returns transcripts of intelligible speech.
+    \item Tone Analyser (experimental). This service analyses a body of text, and aims to return meaningful insights into the tone of message. As explained in the Implementation Plan, this service may not be included in the deliverable.
+    \item NodeRED. This service provides a graphical interface for connection of services, based on Node.js. This is used for quickly testing ideas and rapid development, but is perhaps not as suitable for a final deliverable due to issues with customisation.
+\end{itemize}
+
+
+
+\section{Background}
+\subsection{Cloud Services}
+\subsubsection{Providers}
+\subsubsection{Architectural Advantages}
+
+
+\section{Analysis and Design}
+
+
+\section{Implementation}
+\subsection{Pi and Drone}
+\subsection{Node JS Server}
+
+
+\subsubsection{Server Functionality}
+
+\paragraph{API}
+// TODO why I chose a REST api
+\subparagraph{Sensors and GPS}
+\begin{center}
+	<THE CODE>
+\end{center}
+The sensors and gps api endpoints are designed for the querying of historical data. They take a range of path parameters, such as the time window for sample data, and returns a JSON array of the relevant documents contained in the database.
+
+\subparagraph{Images and Audio}
+\begin{center}
+	<THE CODE>
+\end{center}
+The images and audio endpoints are for file handling. Similar to the sensors endpoints, they can be used to obtain historical files. However, as these file types can't be communicated over MQTT, the endpoints are also used for file upload from the drone. 
+
+\subparagraph{Users}
+\begin{center}
+	<THE CODE>
+\end{center}
+The users endpoints are primarily for admin management of user accounts. Individual accounts can be created, queried, and deleted. 
+
+
+\subsubsection{Security}
+Security is an important issue for any system, especially for those that are connected to the internet. 
+\paragraph{SQL Database}
+\paragraph{User Accounts}
+\paragraph{File Checking}
+
+\subsection{Drone Control}
+
+\subsection{Android Extension}
+
+\section{Testing}
+
+
+
+\section{Results}
+
+
+
+
+\section{Evaluation}
+\subsection{Testing of situations}
+
+
+
+
+
+
+\section{Conclusion}
+\section{Further Work}
+\section{User Guide}
+
+
+
+
+
+
+
+
+
+\bibliographystyle{abbrv}
+\begin{thebibliography}{20}
+    \bibitem{UAVUseCase}
+    Account of UAV use in a natural disaster. Published 2th March, 2015. Accessed 21st January, 2016. \\
+    \url{https://www.microdrones.com/en/news/detail/uav-surveillance-in-earthquake-stricken-cangyuan/}
+    \bibitem{UAV}
+    S. Waharte, N. Trigoni, \textit{``Coordinated Search With Swarm of UAVs''}, InSensor, Mesh and Ad Hoc Communications and Networks Workshops, 2009. SECON Workshops' 09. 6th Annual IEEE Communications Society Conference on 2009 Jun 22 (pp. 1-3). IEEE.
+    \bibitem{Autonomous}
+    T. Tomic et al, \textit{``Towards a Fully Autonomous UAV''}, Robotics and Automation Magazine, IEEE 19.3 (2012): 46-56.
+    \bibitem{Neural}
+    H. Soltau, G. Saon, \textit{``Joint Training of Convolutional and Non-Convolutional Neural Networks''}, to Proc. ICASSP (2014).
+    \bibitem{DeepAI}
+    Y. Bengio, \textit{"Learning Deep Architectures for AI"}, Foundations and Trends in Machine Learning 2:1-127
+    \bibitem{DeepPi}
+    S. Hickson, \textit{"Classifying everything using your RPi Camera: Deep Learning with the Pi"} \\
+    \url{http://stevenhickson.blogspot.co.uk/2015/03/classifying-everything-using-your-rpi.html}
+    \bibitem{Cloud Robotics}
+    D. Lorencik, P.Sincak, \textit{``Cloud Robotics: Current trends and possible use as a service''}, Applied Machine Intelligence and Informatics (SAMI), 2013 IEEE 11th International Symposium on. IEEE, 2013.
+    \bibitem{Software Architecture}
+    A. Sharma, M. Kumar, S. Agarwal, \textit{``A Complete Survey on Software Architectural Styles and Patterns''}, Procedia Computer Science 70 (2015): 16-28.
+    \bibitem{Watson}
+    Upbin, Bruce (November 14, 2013). \textit{``IBM Opens Up Its Watson Cognitive Computer For Developers Everywhere''}. Forbes. Accessed 20th January, 2016. \\
+    \url{http://www.forbes.com/sites/bruceupbin/2013/11/14/ibm-opens-up-watson-as-a-web-service/}
+    \bibitem{EdgeOfSpace}
+    J. Reynolds et al, \textit{``Edge Of Space Project Report''}, Imperial College London, 28th June 2015.
+    \bibitem{Sentiment}
+    N. Shankar Das, M. Usmani, S. Jain, \textit{``Implementation and Performance Evaluation of Sentiment Analysis Web Application in Cloud Computing''}, Computing, Communication and Automation (ICCCA), 2015 International Conference on. IEEE, 2015.
+    \bibitem{Microservices}
+    D. Namiot, M. Sneps-Sneppe, \textit{``On Micro-services Architecture''}, International Journal of Open Information Technologies ISSN: 2307-8162 vol. 2, no. 9, 2014
+    \bibitem{UAVDevelopment}
+    Y. Naidoo, R. Stopforth, G. Bright, \textit{``Development of an UAV for Search and Rescue Applications''}, AFRICON, 2011. IEEE, 2011.
+    \bibitem{Mavlink}
+    Tutorial for connecting autopilot device to a microcontroller, \\
+    \url{http://dev.ardupilot.com/wiki/raspberry-pi-via-mavlink/}
+    \bibitem{Bluemix}
+    A. Siagain, L. Kumar, L. Huang, M. Nguyen, \textit{``IBM Bluemix: Usability Evaluation''}
+    \bibitem{FreeSQL}
+    FreeSQLDatabase, a website offering an online SQL database service. \\
+    \url{http://www.freesqldatabase.com/}
+    \bibitem{Science}
+    `Science behind the service', detailing IBM's research into speech recognition. Accessed 21st January, 2016. \\
+    \url{https://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/speech-to-text/science.shtml}
+    \bibitem{IBMMessaging}
+    IBM Start For Android App. Accessed 21st January, 2016. \\
+    \url{https://github.com/ibm-messaging/iot-starter-for-android}
+
+\end{thebibliography}
+
+
+
+
+\end{document}
