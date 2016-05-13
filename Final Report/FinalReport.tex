@@ -5,6 +5,7 @@
 \usepackage{enumitem}
 \usepackage[hidelinks]{hyperref}
 \usepackage{titlesec}
+\usepackage{listings}
 
 \setcounter{secnumdepth}{4}
 \titleformat{\paragraph}
@@ -116,11 +117,29 @@ Bluemix services, all provided by IBM, that are expected to be used in the deliv
 
 \paragraph{API}
 // TODO why I chose a REST api
-\subparagraph{Sensors and GPS}
+
+In the descriptions below, :<name> indicates a variable parameter in the URI which the server access. In many cases, these are validated. For instance, `:timeFrom` is checked to ensure it is a number, and `:dronename` is checked to ensure the user has that drone registered. \cite{router}
+\subparagraph{Sensors}
 \begin{center}
-	<THE CODE>
+	\begin{lstlisting}
+		GET api/:dronename/sensors
+		GET api/:dronename/sensors/:timeFrom
+		GET api/:dronename/sensors/:timeFrom/:timeUntil
+		GET api/:dronename/sensors/:timeFrom/:timeUntil/:type
+	\end{lstlisting}
 \end{center}
-The sensors and gps api endpoints are designed for the querying of historical data. They take a range of path parameters, such as the time window for sample data, and returns a JSON array of the relevant documents contained in the database.
+The sensors api endpoints are designed for the querying of historical data. They take a range of path parameters, such as the time window for sample data, and returns a JSON array of the relevant documents contained in the database.
+
+\subparagraph{GPS}
+\begin{center}
+	\begin{lstlisting}
+		GET api/:dronename/gps
+		GET api/:dronename/gps/:timeFrom
+		GET api/:dronename/gps/:timeFrom/:timeUntil
+	\end{lstlisting}
+\end{center}
+The gps endpoints are very similar to the sensors endpoints, but simply query the positionlog rather than the sensorlog database. The information should be present in the sensorlog database, but this provides a lighter weight access point for position data, for instance for plotting historical routes. 
+
 
 \subparagraph{Images and Audio}
 \begin{center}
