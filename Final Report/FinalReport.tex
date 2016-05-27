@@ -10,6 +10,7 @@
 \usepackage{tabularx}
 
 
+
 % Bibliography
 \usepackage[
 sorting=none,
@@ -249,16 +250,17 @@ This is a time dependant system, as collected data has a useful `lifespan`. Ther
 This section explains in details each of the 3 primary deliverables. Although a large amount of change occurred throughout development, it is largly only the final solution which is presented here, to ensure a clear overview. As this project is a \textit{design and make} project, as well as being an evolving proof-of-concept, this section can be regarded as one of the most important of the report. Many of the decisions regarding the final implementation are described and justified within, as well as discussions on earlier designs and their flaws. 
  
 \subsection{Pi and Drone}
-Overarching description of system.
+The `drone` deliverable consists of two major components, a Pixhack autopilot and a Pi microcomputer. The autopilot is responsible for the usual actions of a drone, including: receiving remote control signal, and converting them into calibrated motor outputs; using internal sensors, such as attitude, altitude, and GPS position; autonomous flight following a series of pre-defined waypoints, using the sensor readings. It operates using firmware written in C, and is not capable of advanced computation or communication. The Pi is a microcomputer running a Linux distribution. It is highly versatile and customisable, and supports higher-level languages such as Python. 
 
+In this system, the drone frame carries both the autopilot to control flight, and the Pi to allow the more advanced functionality. The Pi and Pixhack are connected via a serial port, and communicate using the MAVLink protocol. The Pi is responsible to collecting all desired data for the system, includingimages and audio from Pi peripherals, and altitude and GPS information from the drone. The Pi constantly transmits this data to the server, and will act upon any commands it receives from the server.
 
 \subsubsection{Physical Assembly}
 The Raspberry Pi was bought through Imperial College EEE Stores, including peripherals such as a WiFi module, PiCam and microphone, and Grove Pi shield. The drone itself arrived mostly in a bulk delivery, the order having been placed by IBM. 
 
 Following a long delay in the arrival of the drone components, it was assembled in March. The assembly itself presented no major problems, with the majority of components being modular plug-and-play units. Throughout assembly and futher development, equipment was bought or replaced with some regularity. Some was planned, such as the RC devices, whilst replacements were unexpected delays. The battery of the drone arrived later than all other components, and then later had to be replaced. The battery needed a specific Lithium Polymer (LiPo) charger, and required additional connecters to attach to the drone power board, and a remote control transmitter and receiver were sourced. Although `Grove Pi` sensors were provided in the initial bulk delivery, the Pi shield required to use them was not. Whilst this list is not comprehensive, it gives a sense of the many requirements of a hardware system. The delays for these components, other than those mentioned in section \ref{MajorDelays}, were individually minimal in their effect upon the project, but were frequent. 
 
-\subsubsection{Mavlink}
-MavLink is a lightweight communication protocol, which packs small C-structs over serial data channels\cite{qGroundMavlink}. It is a non-commercial open-source project, which is used as the primary method of communication in many modern unmanned aerial vehicles. The Pixhack autopilot uses this protocol to communicate with both ground stations and the Raspberry Pi. Both status and sensor data is transmitted, as well as the ability to send commands and instructions to the vehicle. Wrappers around the MavLink protocol are provided in Python by pymavlink, a library in the MavLink git repository.
+\subsubsection{MAVLink}
+MAVLink is a lightweight communication protocol, which packs small C-structs over serial data channels\cite{qGroundMavlink}. It is a non-commercial open-source project, which is used as the primary method of communication in many modern unmanned aerial vehicles. The Pixhack autopilot uses this protocol to communicate with both ground stations and the Raspberry Pi. Both status and sensor data is transmitted, as well as the ability to send commands and instructions to the vehicle. Wrappers around the MavLink protocol are provided in Python by pymavlink, a library in the MAVLink git repository.
 
 \paragraph{Ground Stations}
 `Ground Stations` are software applications that interact with aerial vehicles for preflight calibration and flight control. Given the recency and open-source nature of the MavLink, there are many ground control stations, yet they are all likewise non-commercial ventures. Regrettably, this can mean they are often unreliable, especially when things go wrong. As described in \ref{MajorDelays} the first Pixhack board used was faulty. The ground stations would usually give vague and unhelpful feedback upon the failure of an operation, meaning identifying problems was difficult. The primary ground station used in this project was QGroundControl\cite{qGroundControl}, as not only was it the recommended application for Pixhacks, but it also provided a useful MavLink package inspector. 
@@ -325,38 +327,8 @@ no-SQL databases can be seen a bit like a 'bin'; any JSON object can be dumped i
 
 The Cloudant database was very easy to set up and put data in. However, issues arose when it came to querying data. Due to the fact that the data has no specification, there is no guarentee or knowledge of the data content of the database documents, so it cannot be queried except for with its primary key, '\_id', which is the only enforcement of the database. If not provided \_id is randomly generated, but in this project the use of a timestamp, in milliseconds since epoch, was used as a document \_id for all Cloudant databases. This allowed querying of the data using the id, before indexing was fully established. Indexing is the proper method of querying the database, and requires two steps. First, an index must be made. Next, queries can be run against this index in a similar manner to an SQL query. For instance, an index of the field 'type' is made on the sensorlog databases. This is currently done on database creation. A query can then be run, which uses a selector and the indexed fields to provide relevant results.
 
-//TODO how shit i was with the documentation 
-
-
 \paragraph{SQL} \label{SQL}
-The SQL database is provided as an IBM DB2 service, and isused for more static relational data which is text based and doesn't require large file storage. There are two primary tables, 'users' and 'drones'. These are fairly self explanatory, with users storing a list of the user accounts, and drones storing registered drones. The SQL declaration statements are below. The column names are fairly self-explanatory. 'salt' and 'password' are explained in more detail in the security section, as is the nature of 'role'. An SQL implementation is better suited to this nature of data, as it is more rigid and stringent, ensuring mistakes and errors are less likely to occur. A mistake in this database could cause all users to be unable to login; an error in the Cloudant database would simply result in a malformed query being returned to one user. //TODO WTF?
-
-\begin{center}
-\begin{lstlisting} 
-CREATE TABLE "USERS"
-(
-  "username" VARCHAR(20) NOT NULL,
-  "first_name" VARCHAR(20),
-  "last_name" VARCHAR(20),
-  "salt" VARCHAR(8) NOT NULL,
-  "password" VARCHAR(64) NOT NULL,
-  "role" INT NOT NULL,
-  CONSTRAINT "primary_key" PRIMARY KEY ("username")
-) ORGANIZE BY ROW;
-
-
-CREATE TABLE "DRONES"
-(
-  "name" VARCHAR(20) NOT NULL,
-  "model" VARCHAR(20),
-  "owner" VARCHAR(20) NOT NULL,
-  CONSTRAINT "primary_key" PRIMARY KEY ("name"),
-  CONSTRAINT "owner_key" FOREIGN KEY ("owner") REFERENCES USERS("username")
-) ORGANIZE BY ROW;
-\end{lstlisting}
-\end{center}
-
-Due to previous experience with SQL, there were few issues with the creation or use of the SQL databases. 
+The SQL database is provided as an IBM DB2 service, and isused for more static relational data which is text based and doesn't require large file storage. There are two primary tables, `users` and `drones`, the definitions of which can be found in the Appendix (\ref{SQLDefinitions}). Each table's function and column names are fairly self explanatory, with users storing a list of the user accounts, and drones storing registered drones. `salt` and `password` are explained in more detail in the security section, as is the nature of `role`. An SQL implementation is better suited to this nature of data, as it is more rigid and stringent, ensuring mistakes and errors are less likely to occur. Isolation for security is also a good practice. Having a database reserved specifically for security and account information means the system can focus on access more easily, and any damage caused by a weakness elsewhere in the system is minimised. Due to previous experience with SQL, there were few issues with the creation or use of the SQL databases. 
 
 \subsubsection{API} \label{API}
 Due to the size limitations of the MQTT protocol, a different method is required to exchange files, such as the audio and images captured by the drone. Not only this, but the MQTT model is not suited for making queries for legacy data, or for static information; as a publisher/subscriber model it ideal for live data. Therefore, the HTTP protocol was used due to its ubiquitous support and obvious suitability. A REST API was created on the server, to facilitate ease of development and to conform to industry standards. 
@@ -764,16 +736,46 @@ Finally, the Android app required a bit more reworking for multidrone support, e
  expansion of the website
 
 \section{User Guide}\label{UserGuide}
+Each of the three main components, the drone, server and app, each have their own git repository, containing all source code. Each has a README.md describing installation steps for use, including required dependencies, and basic usage. Note that the system is largely automatic, therefore once running there is little need for user guides or interaction. For the server, there is documentation available detailing both the external API for any client, and also the internal functions for a future developer. 
 
-
-
-
+The repositories are available at: 
+\begin{itemize}
+	\item Pi software: \url{https://github.com/jake2184/drone_pi}
+	\item Server Software: \url{https://github.com/jake2184/drone}
+	\item Android App: \url{https://github.com/jake2184/drone_app}
+\end{itemize}
 
 
 
 
 
 \section{Appendix}
+
+\subsection{SQL Table Definitions} \label{SQLDefinitions}
+\begin{center}
+\begin{lstlisting} 
+CREATE TABLE "USERS"
+(
+  "username" VARCHAR(20) NOT NULL,
+  "first_name" VARCHAR(20),
+  "last_name" VARCHAR(20),
+  "salt" VARCHAR(8) NOT NULL,
+  "password" VARCHAR(64) NOT NULL,
+  "role" INT NOT NULL,
+  CONSTRAINT "primary_key" PRIMARY KEY ("username")
+) ORGANIZE BY ROW;
+
+
+CREATE TABLE "DRONES"
+(
+  "name" VARCHAR(20) NOT NULL,
+  "model" VARCHAR(20),
+  "owner" VARCHAR(20) NOT NULL,
+  CONSTRAINT "primary_key" PRIMARY KEY ("name"),
+  CONSTRAINT "owner_key" FOREIGN KEY ("owner") REFERENCES USERS("username")
+) ORGANIZE BY ROW;
+\end{lstlisting}
+\end{center}
 
 \subsection{REST API} \label{apdxRestApi}
 \subsubsection{Sensors}
@@ -865,7 +867,7 @@ The drones endpoints are for management of registered drones in the SQL database
 
 
 \begin{table}[ht]
-\caption{Searhc and Rescue Scenarios}
+\caption{Search and Rescue Scenarios}
 \hyphenchar\font=-1
 \centering
 \begin{tabularx}{\textwidth}{| >{\centering}m{1.5cm} | >{\centering}m{2cm} | X | X |}
