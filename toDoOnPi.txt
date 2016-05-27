@@ -25,6 +25,7 @@ pip install ibmiotf
 pip install pymavlink
 pip install speedtest-cli
 pip install grovepi
+pip install websocket-client
 
 WIFI:
 edit /etc/wpa-supplicant/wpa-supplicant.conf
