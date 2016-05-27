@@ -6,22 +6,98 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{titlesec}
 \usepackage{listings}
+\usepackage{parskip}
+\usepackage{tabularx}
 
+
+% Bibliography
+\usepackage[
+sorting=none,
+style=ieee,
+backend=biber
+]{biblatex}
+\addbibresource{references.bib}
+
+% Contents page numbering depth
 \setcounter{secnumdepth}{4}
+
+% Unknown
 \titleformat{\paragraph}
 {\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
 \titlespacing*{\paragraph}
 {0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
 
+%\titlespacing{\subsection}{0pt}{\parskip}{-\parskip}
+\titlespacing{\subsubsection}{0pt}{\parskip}{-\parskip}
+\titlespacing{\paragraph}{0pt}{\parskip}{-\parskip}
+%\titlespacing{\subparagraph}{0pt}{\parskip}{-\parskip}
+
 \renewcommand{\familydefault}{\sfdefault}
+
+% Add page break after each section
+\newcommand\sectionbreak{\clearpage}
+
+% Set page dimensions
 \geometry{a4paper, portrait, margin=2.5cm}
+
+
+% Change itemize default
 \def\labelitemi{--}
-\hyphenchar\font=-1
+
+
+% Prevent horrible hyphenation
+\hyphenchar\font=-1 
+\righthyphenmin=62 
+\lefthyphenmin=62
+
+
+% https://tex.stackexchange.com/questions/89574/language-option-supported-in-listings
+\usepackage{color} % Add colours for listing. 
+\definecolor{lightgrey}{rgb}{.9,.9,.9}
+\definecolor{darkgrey}{rgb}{.4,.4,.4}
+\definecolor{purple}{rgb}{0.65, 0.12, 0.82}
+\lstdefinelanguage{JavaScript}{
+  keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  ndkeywordstyle=\color{darkgrey}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+
+\lstset{
+   language=JavaScript,
+   backgroundcolor=\color{lightgrey},
+   extendedchars=true,
+   basicstyle=\footnotesize\ttfamily,
+   showstringspaces=false,
+   showspaces=false,
+   numbers=left,
+   numberstyle=\footnotesize,
+   numbersep=9pt,
+   tabsize=2,
+   breaklines=true,
+   showtabs=false,
+   captionpos=b
+}
+
+
+
+
+
 \graphicspath{{images/}}
 
-
+\setlength{\parindent}{0cm}   % Don't indent paragraphs
+\setlength{\tabcolsep}{10pt} % Increase column spacing
 
 \begin{document}
+
 
 \begin{titlepage}
                 % \newgeometry{top=25mm,bottom=25mm,left=38mm,right=32mm}
@@ -67,113 +143,610 @@
 Talk about
 
 
-\section{Project Specification}
-As defined in Interim Report  \
+\section{Background}
+\subsection{Motivation}
+Whilst there is a growing trend for drone usage in search and rescue operations, this often requires a trained manual operator. With the increasing accuracy and improvements in machine learning techniques, both local and remote AI control of drones is becoming a reality. However, machine learning algorithms often require extensive computational power, and are not suited to be executed locally on a drone. Additionally, any behaviour learned is lost should a drone be destroyed. Cloud services provide a solution to these problems.
 
-This project is intended to deliver a system comprising of two main components, the drone and cloud services. The purpose of the drone is to act as a data collector and system actuator, whilst the cloud services combines a variety of data analytical services to inspect the data from the drone and issue appropriate commands.
 
-\subsection{Deliverables}
-This project is intended to deliver a system comprising of two main components, the drone and cloud services. The purpose of the drone is to act as a data collector and system actuator, whilst the cloud services combines a variety of data analytical services to inspect the data from the drone and issue appropriate commands.
+The use of drones in search and rescue is not only a very active field of research, there are also an increasing number of successful use cases \cite{UAVUseCase}. \emph{Search} can be considered the more important part of search and rescue, as without a person's location known, they cannot be rescued. Unmanned Aerial Vehicles (UAVs) tend to be the most common design of drone used, as they are most suited to helping \emph{search}; from their unique viewpoint, they can gain greater visual information in a much shorter time, especially if more than one drone work in collaboration \cite{UAV}. However, these drones still require a skilled operator, which may either be unachievable or a poor use of limited resources.
+
+
+Although research is being conducted into making drones fully autonomous, as is pointed out by Tomic et al  \cite{Autonomous} UAVs can only support a lightweight payload, which greatly restricts the computing power available. This is especially important for autonomous drones as they rely heavily on machine learning algorithms for functionality such as speech recognition and visual recognition. These are typically dependent on computationally intensive neural networks \cite{Neural}, which currently cannot be deployed on the microprocessors light enough to be used as a UAV payload. Whilst there exist a range of libraries supporting image and speech recognition on mobile devices, these are not suitable for this application due to two major issues; the computational complexity required for higher accuracy, and power consumption. `Offline' techniques do not tend to use neural networks, and are even less likely to use deep neural networks. This is because they require a large amount of mathematical computation when training and using the network; deep neural networks are notoriously hard to optimise \cite{DeepAI}. In theory they can be implemented on small devices such as a Pi, and indeed sometimes are \cite{DeepPi}, but even with the Pi's processor running at maximum image classification can take ~20 seconds. This is much too slow for real-time search and rescue. In addition, power consumption must be considered. In all examples such as the one cited above, the microprocessor has a stable mains power supply. On a drone, there is no such source. The maximum current the Pi can draw is 1A. Given that the Pi takes 300mA when idle, the PiCam module takes another 250mA, a communication module with the ground will require a further 200mA, and peripheral sensors will require another 100mA or so, there is very little room to power the CPU or GPU to implement onboard processing. Whilst computation could be expanded by adding more processors, as is done by Tomic et al \cite{Autonomous}, there comes a point where, given that the lifting capability of the drone is fixed, moving computation off board is the only option.
+
+
+One solution to this problem, which is growing ever more popular, is the use of the `cloud' to carry out large data storage and computationally expensive tasks \cite{CloudRobotics}. Although not new in concept, given the increase in availability of commercial cloud service providers in recent years the idea of a remote AI is becoming more of a reality. Analysis of cloud computing systems has shown them to have perform well in many desirable areas, such as scalability, portability, and maintainability \cite{SoftwareArchitecture}, which are traits that are becoming more important in the digital age. Given that the drone already has a communication link with the ground for control, this requires little expansion in terms of the hardware or power consumption of the drone; the communication module with draw more current as it transmits more frequently, but the device will still consume less power than if it were to implement local computation as described above. An added benefit of cloud services, or conversely a restriction of onboard processing, is being able to use proprietary services, such as the Tone Analysis described later in this report.
+
+
+
+
+\section{Requirements Capture}
+This project is intended as a proof-of-concept, rather than a solution that can be implemented instantly, and therefore the requirements capture can be done through a combination of the developers intuition and discussion with the client, IBM. Additionally, as the work is not being based off any prior implementation or research, and the developer has little to no experience with the majority of the concepts involved in this project, a large amount of change is expected throughout the project as to how it is actually implemented. This should not, however, greatly affect the overall aims.
+
+The Requirements Capture and Specification of this system were initially vague, and intentially so. This was to allow a high level of flexibility and independence for the developer to proceed as they wish, whilst achieving larger-scale aims. This was also a reflection on the lack of experience the developer had with aspects of the projects, such as drones, web development, cloud services and asynchronous programming. The flexibility therefore allows development with a very steep learning curve.
+
+As this was an industrial project, the Requirements Capture and Specification mainly came from the client, IBM. Initially they were neatly split into three parts.
+
+Firstly, a deliverable of a drone must be made. This should be remote controlled, with a mind to it being autonomous in the future. It should act as a data capturer, with a microphone and camera attached.
+
+Secondly, a deliverable of a server must be made. This should incorporate connections to a variety of suitable IBM services, and use data from the drone and analysis from the services to send intelligent commands back to the drone.
+
+Thirdly, the resultant information and analysis from the system should be fed back to a user. 
+
+These very simplistic requirements were expanded and refined in the first few months of the project, leading to the Project Specification that was included in the Interim Report. This has been included here, with refinements and updates. The majority of the specification below was met, and any deviations are explained in the relevant Implementation section. For focusing of aims and evaluation, a use-case of `search and rescue` was used throughout the project. The project should also bear in mind the intention for future development regarding autonomous control and command of the drone. Although this is beyond this project's scope, thought should be given towards architecural decisions to aid this future plan. 
+
+NOTE: Although this above autonomous control above featured fairly heavily in the Interim Report, reviewing the original client specification and discussion with client has confirmed that the Interim Report was inaccurate in terms of its specification and requirements. 
+
+\subsection{Project Specification and Deliverables}
 \subsubsection{Drone}
-The `drone' is a self-contained unit consisting of a quadcopter drone frame, being assembled by myself, with an autopilot device attached. This device allows simpler control of the drone, as well as added functionality such as `hover', but despite the name does not provide autonomous flying and navigation. This autopilot can be controlled either via remote, as is typical of drones, or via direct connection through a set of telemetry IO pins. In my `drone', these  will be connected to a Raspberry Pi's GPIO pins, and the Pi is to be carried as a drone payload. The Pi can therefore send signals to the drone autopilot in a similar manner to a remote control, for instance sending the `up' command.
+The `drone' is a self-contained unit consisting of a quadcopter drone frame, being assembled by the developer, with an autopilot device attached. This autopilot can be controlled either via remote, as is typical of drones, or via direct connection through a set of telemetry IO pins. In this system, these IO pins will be connected to a Raspberry Pi's GPIO pins, and the Pi is to be carried as a drone payload. The Pi can therefore send signals to the drone autopilot in a similar manner to a remote control, for instance increasing the throttle.
 
-\vspace{\baselineskip} \noindent
-The Raspberry Pi will be connected to the internet, initially via a WiFi connection, however this may be changed to a 3G link depending on the requirements of the connection and the level of data transfer. This link provides access to Bluemix, through the HTTP and MQTT protocols. The HTTP connection provides a large data upload link to Bluemix, for example images and audio recordings. This connection is made on a file-by-file basis. The MQTT protocol is different; as it is based on a publisher/subscriber model, it requires a `stay alive' connection to be established initially. Its purpose is to allow movement commands to be pushed to the Pi from Bluemix. Small-size status data will be sent from the Pi to Bluemix, such as GPS coordinates, but it has not yet been established if this will be via the MQTT or HTTP protocols.
+The Raspberry Pi will be connected to the internet, initially via a WiFi connection, however this may be changed to a 3G link depending on the requirements of the connection and the level of data transfer. This link provides access to Bluemix, through the HTTP and MQTT protocols. The HTTP connection provides a large data upload link to Bluemix, for example images and audio recordings. This connection is made on a file-by-file basis. The MQTT protocol is different; as it is based on a publisher/subscriber model, it requires a `stay alive' connection to be established initially. Its purpose is to allow movement commands to be pushed to the Pi from Bluemix. Small-size status data will be sent from the Pi to Bluemix, such as GPS coordinates and sensor readings, via the MQTT protocol.
 
-\vspace{\baselineskip} \noindent
 The Pi will be capable of a variety of data collection methods, however the primary one will be `vision', in the form of a Raspberry PiCam. This is a small, very compact camera connected via a dedicated ribbon cable to the Pi board. It is capable of still images with a resolution of 2592x1944, or video at 1920x1080. In this project I will be using still images, as this allows use of image recognition services which currently don't support video. The secondary data collection method will be audio, collected via an external microphone. Other planned data sources also include temperature and drone location, with both GPS coordinates and altitude.
 
-\subsubsection{Cloud Services}
-For reasons explained in further detail within the Background section, the IBM Bluemix platform was chosen to be the primary provider of the cloud services. The `cloud services' deliverable will consist of a system or application which is run in the cloud on a remote server. As stated, this will be run on Bluemix with the application having its own designated domain, currently http://drone-nodes.eu-gb.mybluemix.net/, through which the HTTP REST requests will occur. The server will receive the data uploaded from the drone, and will store it, process it, and return feedback. The central component running on the server will be written in Node.js. The `intelligence', which decides how to reacts to the analysis the services provide, will be written as a Node.js component running on the server.
+\subsubsection{Server}
+For reasons explained in further detail within the Background section, the IBM Bluemix platform was chosen to be the primary provider of the cloud services. The `server' deliverable will consist of an application which is run in the cloud on a remote server. As stated, this will be run on Bluemix with the application having its own designated domain, currently http://drone-nodes.eu-gb.mybluemix.net/, through which the HTTP REST requests will occur. The server will receive the data uploaded from the drone, and will store it, process it, and return feedback via the MQTT protocol. The central component running on the server will be written in Node.js. The `intelligence', which decides how to reacts to the analysis the services provide, will be written as a Node.js component running on the server.
 
-\vspace{\baselineskip} \noindent
 Bluemix services, all provided by IBM, that are expected to be used in the deliverable include:
 \begin{itemize}
     \item Cloudant Database. This is a noSQL database built on top of CouchDB. This will be used to store all data, whether raw images from the camera or the results of analysis.
     \item Internet Of Things Foundation. This is a wrapper around an MQTT broker, providing the publisher/subscriber control.
     \item Visual Recognition. Service that takes as input uploaded images and returns a set of labels with associated probability values, which aim to describe what the image depicts.
     \item Speech To Text. A service based on a neural network that analyses input audio and returns transcripts of intelligible speech.
-    \item Tone Analyser (experimental). This service analyses a body of text, and aims to return meaningful insights into the tone of message. As explained in the Implementation Plan, this service may not be included in the deliverable.
-    \item NodeRED. This service provides a graphical interface for connection of services, based on Node.js. This is used for quickly testing ideas and rapid development, but is perhaps not as suitable for a final deliverable due to issues with customisation.
+    \item NodeRED. This service provides a graphical interface for Node.js, with each `node` on a flowchart representing a Node.js module. Although it allows rapid development, it was decided early on in the project that due to its lack of customisability it was not used. 
 \end{itemize}
 
 
+\subsubsection{Feedback}
+Drones in a search and rescue operation are inherently mobile, as are any any operators. A method of passing data back to a user should therefore reflect this. Not only this, but the feedback should be user friendly, ruling out the simplest option of forwarding the server log files.
 
-\section{Background}
-\subsection{Cloud Services}
-\subsubsection{Providers}
-\subsubsection{Architectural Advantages}
+An Android application was chosen as the primary feedback method. This can be easily integrated with the server component via the ubiquitous support of HTTP, and by adapting an exisiting IBM Android application to support MQTT communication\cite{iotStarterAndroid}. The app should be able to present to the user live information about the current status of the drone(s), and the result of any analysis that the server may do. The information that the app could show includes, but is not limited to: drone location and status; direct images, audio, and sensor readings; direct feedback from the cloud services such as image labels; and filtered or interpreted analysis.
 
+\subsection{Assessment Metrics}
+As this is a proof-of-concept system, the primary concern and method of evaluation is that the system functions as desired, as described above. However, this system does have a potential real-world application, and the performance of the system should be investigated to ensure it is viable. The main characteristic of this system's performance is the latency between the drone emitting stimulus, and the server emitting a reponse dependant on the feedback from the services. The overall feedback from the services can be investigated, but is not as aspect of the system which can be controlled. However, the feedback may be affected by the quality and density of the input data, which is adjustable. Therefore the effect that this different quality data has on both the system latency and the system response will be inspected.
 
 \section{Analysis and Design}
+This project was tackled with an AGILE methodology\cite{agileManifest}. This means, as the name would suggest, being flexible and adaptable to change. Throughout the project, the focus was on creating a working solution, rather than attempting to achieve an end goal. This fits in perfectly with a proof-of-concept project. First, develop just one pillar of the concept, and make sure it works. Add more, ensuring functionality at each stage, until the whole is complete. One of the primary principles of the Agile Manifesto is ``Working software is the primary measure of success``\cite{agileManifest}, hence the focus on small and constant evolvement. Due to a modular approach, any change in requirements or resources can be more easily adapted to. 
 
+The project specification quite succinctly identifies the neccessary components and deliverables, as the specifications are by nature component definitions as opposed to system characteristics. What does require more thought is how each component is built and designed. The majority of component-specific design choices are described in the relevant Implementation sections; due to the agile mentality the design often changed, usually in an forward evolving manner. This was especially prevalent in the Server component, due to lack of experience in NodeJS and practical networking practices. However, a few overarching themes are discussed below.
+
+\subsection{Architectural Choices}
+Modularity and separation are traits that encouraged in many aspects of software engineering, and are focussed on in this project. If a component has many tasks to do silmultaneously, these are separated and implemented concurrently rather than sequentially. A monolithic approach tends to be more archaic, and have often been replaced with a microservices approach. 
+
+\subsection{Cloud Services}
+An example of the microservices architecture is the use of individual and independant cloud services, rather than implementing all functionality in a single `black box`. Should one fail, the others should be unaffected, and the system should be able to handle with this in a pre-determined manner. 
+\subsubsection{Providers}
+There exist a number of Platform as a Service (PaaS) providers, but three of the most popular are summarised below.
+\begin{itemize}
+    \item Microsoft Azure - well-established provider, high cost with no free-tier
+    \item Google App Engine - offers a free-usage tier, but has more limited machine learning services
+    \item IBM Bluemix - more recently released, offers unique `Watson' intelligence.
+\end{itemize}
+As this project was a collaboration with IBM, Bluemix was the provider chosen. However, there is good reason for this, primarily due to the unique services and functionality which Bluemix provides related to machine learning and data analytics. These have been developed following IBM's success with the intelligent machine Watson, and are likewise named Watson Services \cite{Watson}. The insights provided by these unique services have been experienced in previous work with Bluemix \cite{EdgeOfSpace}, and verified by recent research to test Bluemix's capabilities \cite{Sentiment}. Especially relevant services that Bluemix provides, which are not available from alternative PaaS providers, are the Visual Recognition and Tone Analysis services.
+
+\subsection{Security and Safety}
+Security is an essential aspect of any modern system. This project, despite only being a proof-of-concept application, requires a reasonable level of software security. Potential risks from a lack of security include:
+\begin{itemize}
+	\item Loss of data, both drone collected and personal data
+	\item Abuse of cloud services - `free-tier` usage of cloud services all have a usage limit. If exceeded, payment is required
+	\item Physical damage or theft of drones, as flight commands can be sent from server
+\end{itemize}
+The focus for the mitigation of these risks is the central server, and the communication it has with peripheral components. Sufficient steps will be taken throughout the development process to ensure that any security risk is minimal.
+
+There are practical safety concerns when regarding aerial vehicles. Well before any flight takes place, the appropriate regulations from the Civil Aviation Authority will be read and understood, and discussion with the supervisor of the project will take place.
+
+\subsection{Documentation}
+Any software system is only as good as its documentation. If future users or developers cannot understand and maintain a codebase, it has little purpose. Therefore this project will strive to provide concise and clear documentation of all aspects, through a combination of code commenting, API documentation, and JavaDoc documentation. The work of this project, following its completion, is going to be passed to and continued by developers at IBM. This only reinforces the requirement for effective documentation.
+
+Git will be used as a Version Control System (VCS), with repositories hosted remotely both on GitHub CITE and IBM's repository hosting website Jazz\cite{jazz}. Not only will this ensure a reliable backup for the codebase, but git repositories stores data about development throughout the lifetime of a project. As well as static documentation, historical development information can be useful in understanding a code base, for understanding architecural and software decisions. Following the project's completion, these repositories will be made public and passed to IBM.
+
+A user guide at the end of the report details fully instructions for use and documentation details.
+
+\subsection{Synchronisation}
+This is a time dependant system, as collected data has a useful `lifespan`. There is little point in reacting to hour old images. Therefore, the time that specific items of data is captured must be recorded and stored alongside the data itself. This becomes slightly more complex when the data is used accross many different systems and software languages. The format of the timestamp must be supported and understood by each system. To facilitate this, all timestamps and measurements will be done in milliseconds since epoch, a (currently) 13 digit number that represents the time passed since 1 January, 1970. It must all be ensured that all systems are in the same time zone, with the same current time value.
 
 \section{Implementation}
+This section explains in details each of the 3 primary deliverables. Although a large amount of change occurred throughout development, it is largly only the final solution which is presented here, to ensure a clear overview. As this project is a \textit{design and make} project, as well as being an evolving proof-of-concept, this section can be regarded as one of the most important of the report. Many of the decisions regarding the final implementation are described and justified within, as well as discussions on earlier designs and their flaws. 
+ 
 \subsection{Pi and Drone}
+Overarching description of system.
+
+
+\subsubsection{Physical Assembly}
+The Raspberry Pi was bought through Imperial College EEE Stores, including peripherals such as a WiFi module, PiCam and microphone, and Grove Pi shield. The drone itself arrived mostly in a bulk delivery, the order having been placed by IBM. 
+
+Following a long delay in the arrival of the drone components, it was assembled in March. The assembly itself presented no major problems, with the majority of components being modular plug-and-play units. Throughout assembly and futher development, equipment was bought or replaced with some regularity. Some was planned, such as the RC devices, whilst replacements were unexpected delays. The battery of the drone arrived later than all other components, and then later had to be replaced. The battery needed a specific Lithium Polymer (LiPo) charger, and required additional connecters to attach to the drone power board, and a remote control transmitter and receiver were sourced. Although `Grove Pi` sensors were provided in the initial bulk delivery, the Pi shield required to use them was not. Whilst this list is not comprehensive, it gives a sense of the many requirements of a hardware system. The delays for these components, other than those mentioned in section \ref{MajorDelays}, were individually minimal in their effect upon the project, but were frequent. 
+
+\subsubsection{Mavlink}
+MavLink is a lightweight communication protocol, which packs small C-structs over serial data channels\cite{qGroundMavlink}. It is a non-commercial open-source project, which is used as the primary method of communication in many modern unmanned aerial vehicles. The Pixhack autopilot uses this protocol to communicate with both ground stations and the Raspberry Pi. Both status and sensor data is transmitted, as well as the ability to send commands and instructions to the vehicle. Wrappers around the MavLink protocol are provided in Python by pymavlink, a library in the MavLink git repository.
+
+\paragraph{Ground Stations}
+`Ground Stations` are software applications that interact with aerial vehicles for preflight calibration and flight control. Given the recency and open-source nature of the MavLink, there are many ground control stations, yet they are all likewise non-commercial ventures. Regrettably, this can mean they are often unreliable, especially when things go wrong. As described in \ref{MajorDelays} the first Pixhack board used was faulty. The ground stations would usually give vague and unhelpful feedback upon the failure of an operation, meaning identifying problems was difficult. The primary ground station used in this project was QGroundControl\cite{qGroundControl}, as not only was it the recommended application for Pixhacks, but it also provided a useful MavLink package inspector. 
+
+\subsubsection{Pi Development}
+The software on the Pi is written in Python, due to the rapid speed of scripting and the large amount of support available. The tasks that the drone has to undertake involve large amounts of blocking and low CPU usage, such as a file upload, or sensor reading. Therefore, the use of threading is extensive. The threads are summarised below, with each starting at program boot and entering an endless loop. 
+\begin{itemize}
+	\item The main, primary thread. After initialising variables and spinning off threads, this regularly checks the \texttt{PiCommandQueue}, and will act upon any commands it receives such as changing the mqtt upload interval.
+	\item \texttt{sensorThread} reads Pi attached sensors, such as temperature and airpurity, editing the \texttt{sensors} object.
+	\item \texttt{droneThread} communicates with the drone autopilot. This is a rather heavier thread. After establishing a connection with the drone, this threads repeatedly attemps to receive a message from the drone, and then checks to see if any commands are on the \texttt{MavCommandQueue}. Incoming messages are passed through a switch statement, and may update the \texttt{sensors} or \texttt{gps} objects. Commands are looked up in a dictionary from the provided string, and the corresponding function is carried out with the provided arguments. 
+	\item \texttt{imageThread} regularly captures images using the PiCam, using settings from the \texttt{status} object.
+	\item \texttt{audioThread} captures audio from the microphone in two methods. Either audio is captured and directly streamed to the server, or audio files can be captured based on volume detection. These files may be converted to mp3, or saved as uncompressed WAV.
+	\item \texttt{imageUploadThread} continually finds the latest file in the image folder, and uploads this to the server. A check is made to ensure the image has not already been sent.
+	\item \texttt{audioUploadThread} does the the same as the \texttt{imageUploadThread}, but can be put on hold if the Pi is streaming audio.
+	\item \texttt{mqttThread} connects to the MQTT broker. It regularly sends the \texttt{sensors} object, and will handle any commands sent from the server, adding them to the \texttt{PiCommandQueue} or \texttt{MavCommandQueue}
+\end{itemize}
+
+Due to the many threads operating on the same objects, thread-safe programming must be used. The message queue are instantiated as a thread-safe FIFO queue, and threading locks are used for access to the \texttt{sensors}, \texttt{gps} and \texttt{status} objects.
+
+The majority of development of the python on the Pi progressed as planned, without any major problems or architectural changes encountered. It was clear from early on that threads should be used due to the many blocking tasks, and although issues were encountered with adding security to satisfy the server requirements, and with ensuring objects were thread safe, these were not unexpected or exceptional. However, there were significant issues with the droneThread, as described in \ref{MajorDelays}.
+
+\subsubsection{Major Delays} \label{MajorDelays}
+For a period of around 6 weeks, there was serious difficulties in getting the autopilot to behave as expected. A large amount of time was spent during this period trying to debug and understand the issue, but eventually it turned out to be faulty hardware. 
+
+The issue was that although the autopilot would communicate as expected with MavLink, there were notable omissions from the packets received, such as RC value, and output servo values. The drone would not `arm`, the state needed to begin flying. Due to inexperience with the protocol and aerial vehicles, and a complete lack of any form of error message, it was assumed that is was a configuration or software error. Large amounts of time was spent trawling through online web forums and literature. Note that due to the non-commercial nature of MavLink and related components, there was no official support other than the company the drone was purchased from. 
+
+Many different approaches and solutions were attempted, and certain issues were fixed; a junction on the provided Pulse-Position-Modulation (PPM) encoder required soldering to provide power to the RC, an issue which was only known about due to contacting technical support from unmannedTech\cite{ppmSolder}. The lack of provided documentation meant there were a number of similar issues throughout the project. However, none of these fixed the primary issues. Eventually it was found that the SD card of the autopilot, once it had been reformatted due to it being corrupted, showed an error message `PX4IO board not found`. This lead to attempts to fix the firmware on the autopilot, which forums indicated was the root of the issue. However, this, combined with the inability to power the Pixhack directly (only indirectly via the ESC), lead the technical support at unmannedTech to suspect a hardware fault, and to return the board\cite{px4ioNotFound}. 
+
+The board was indeed faulty, and after receiving a replacement the board behaved as expected, and is able to arm correctly. However, due to this extensive delay, development regarding the control of the drone was severely restricted. Autonomous control was not fully achieved.
+
+One advantage of this issue was that due to line-by-line debugging of the large pymavlink library, a solid understanding of how it is implemented was gained. It also allowed time for greater development of the central server component of the system.
+
+Another substantial delay was trying to install \texttt{ffmpeg} on the Raspberry Pi (see \ref{AudioFile}). \texttt{ffmpeg} has been removed from the official repositories, and attempting to build from source did not work. Different sources and configuration were attempted, with each source build taking 6 hours on the Pi. Although a prebuilt binary was eventually found, this did not work due to errors with previous configurations. Eventually, the operating system was reinstalled, upon which the prebuilt binary worked as expected. This also allowed an exact list of installation requirements on the Pi to be generated for future use - see \ref{UserGuide}. 
+
+\subsubsection{Audio File Conversion}\label{AudioFile}
+Initially, audio was only captured by volume activation, and saved as an uncompressed WAV file. This is due to the requirement of the Speech to Text service requiring input files of a specific format. However, uncompressed WAV files are very large, and therefore take a considerable time to upload. This means any analysis returned from the service is likely to be too old to be useful. Therefore, data compression was implemented. mp3 is a standard, high-compression audio format. The tool \texttt{ffmpeg} was used for this conversion, due to a lack of a suitable Python library to execute the conversion. After the data is captured, it is passed to the \texttt{ffmpeg} tool as a command-line process, which saves an mp3 file format. Once this file is uploaded to the server, an npm module\cite{npmlame} providing access to \texttt{lame} was used to decompress the mp3 into a WAV file, which can be sent to the Speech To Text service for analysis. 
+
+\subsubsection{Streaming}\label{Streaming}
+Once the drone rotors were attached and the drone could run, it became clear that noise activation would not work as a method to start and stop audio capture. The volume of the drone rotors was far louder than expected, and would drown out any voice. The alternative is to have constant recording, with a set time interval to create discrete files. However, not only does this raise the issue of sentences being split over files, but the Speech To Text service cannot cope well with high levels of noise, as shown in \ref{Testing}. 
+
+The human ear, however, is well known to be very adapt at the cocktail party effect\cite{cocktailParty}. A human may be able to make use of audio that the intelligent services cannot. Therefore, the functionality of audio streaming was added to all components of the system. If the appropriate option is enabled on the Pi, file capture stops, a connection is made to a websocket on the server, and all audio data is directly uploaded as binary data. The server receives this data on one `uploaded` websocket, and broadcasts it to any listeners on the corresponding `listen` websocket. The Android app can choose to stream audio, in which case it connects to the `listen` websocket, and plays any data received.
+
 \subsection{Node JS Server}
+The system requirements specified that a central server must exist, both to coordinate communication between all remote components and to analyse and act upon this communication. This will require many asynchronous actions occuring at the same time, which will have different requirements. Connections to IBM services may have a very high latency due to the time required to implement the analysis, yet require little server processing. Assessing and acting upon the results from IBM services will require server processing, yet no external connections. IBM Bluemix provides a server container, but the server implementation must be written in a language of the developer's choice. 
+
+NodeJS was chosen as the language for the server. This was for the two main reasons of existing support for IBM services, and its suitability for this project's requirements. Although the IBM services do all provide a HTTP API, there exist a NodeJS SDK, which creates objects to include and interact with rather than interacting directly with the API\cite{githubWatsonCloud}\cite{githubCloudant}\cite{githubDB2}. This would save a vast amount of time and effort throughout the project. Secondly, NodeJS is suitable for servers which are event driven, non-blocking asynchronous actions\cite{smackdownPHPNodejs}.  
+
+All of the IBM services used, each of which are described in more details below, are interacted with via NodeJS modules as stated above. At server boot, a credentials JSON object, VCAP\_SERVICES, is read. In Bluemix, these are set as environment variables, where as locally the credentials are read directly from a file. The credentials are then used to instantiate the object, and for some a connection is made immediately.
+
+\subsubsection{MQTT Service}
+At boot, the server registers itself as an Application on the MQTT broker, subscribing to all device events, and therefore picking up any messages from the drone. This service is used in the server to pickup drone messages, send drone commands, and also send messages to other connected clients such as the Android app.
+
+\subsubsection{Analytical Services}\label{AnalyticalServices}
+// Where do i talk about how crap they are?
+\begin{itemize}
+	\item VisualRecognition - used to generate keyword labels off an input image, which originates from the drone 
+	\item Speech To Text - used to generate a transcript from an input audio file, which originates from the drone
+\end{itemize}
+
+\subsubsection{Data Storage}
+Two methods of data storage are used, a no-SQL database service called Cloudant, and a standard SQL database. Both are managed through a website 'dashboard', and are accessed through a NodeJS module wrapper around a REST API. Both are used as each is better suited for the task for which they are used.
+\paragraph{Cloudant}
+no-SQL databases can be seen a bit like a 'bin'; any JSON object can be dumped into it, regardless of properties or adherance to a pre-specified specification. This is perfectly suited to sensor data recording, as it means if a new sensor type is added the database requires no alteration, similarly if a sensor reading is omitted. Each record in the database is called a document. It is also possible to attach files, such as JPEGs or WAV files, to a document as an attachment. This is a much easier way of storing large volume data when compared to SQL BLOB(Binary Large OBject). For these reasons, the IBM no-SQL implementation, Cloudant, was chosen as the persistant storage method for all data, other than the accounts described in the SQL section below. 
+
+The Cloudant database was very easy to set up and put data in. However, issues arose when it came to querying data. Due to the fact that the data has no specification, there is no guarentee or knowledge of the data content of the database documents, so it cannot be queried except for with its primary key, '\_id', which is the only enforcement of the database. If not provided \_id is randomly generated, but in this project the use of a timestamp, in milliseconds since epoch, was used as a document \_id for all Cloudant databases. This allowed querying of the data using the id, before indexing was fully established. Indexing is the proper method of querying the database, and requires two steps. First, an index must be made. Next, queries can be run against this index in a similar manner to an SQL query. For instance, an index of the field 'type' is made on the sensorlog databases. This is currently done on database creation. A query can then be run, which uses a selector and the indexed fields to provide relevant results.
+
+//TODO how shit i was with the documentation 
 
 
-\subsubsection{Server Functionality}
+\paragraph{SQL} \label{SQL}
+The SQL database is provided as an IBM DB2 service, and isused for more static relational data which is text based and doesn't require large file storage. There are two primary tables, 'users' and 'drones'. These are fairly self explanatory, with users storing a list of the user accounts, and drones storing registered drones. The SQL declaration statements are below. The column names are fairly self-explanatory. 'salt' and 'password' are explained in more detail in the security section, as is the nature of 'role'. An SQL implementation is better suited to this nature of data, as it is more rigid and stringent, ensuring mistakes and errors are less likely to occur. A mistake in this database could cause all users to be unable to login; an error in the Cloudant database would simply result in a malformed query being returned to one user. //TODO WTF?
 
-\paragraph{API}
-// TODO why I chose a REST api
-
-In the descriptions below, :<name> indicates a variable parameter in the URI which the server access. In many cases, these are validated. For instance, `:timeFrom` is checked to ensure it is a number, and `:dronename` is checked to ensure the user has that drone registered. \cite{router}
-\subparagraph{Sensors}
 \begin{center}
-	\begin{lstlisting}
-		GET api/:dronename/sensors
-		GET api/:dronename/sensors/:timeFrom
-		GET api/:dronename/sensors/:timeFrom/:timeUntil
-		GET api/:dronename/sensors/:timeFrom/:timeUntil/:type
-	\end{lstlisting}
+\begin{lstlisting} 
+CREATE TABLE "USERS"
+(
+  "username" VARCHAR(20) NOT NULL,
+  "first_name" VARCHAR(20),
+  "last_name" VARCHAR(20),
+  "salt" VARCHAR(8) NOT NULL,
+  "password" VARCHAR(64) NOT NULL,
+  "role" INT NOT NULL,
+  CONSTRAINT "primary_key" PRIMARY KEY ("username")
+) ORGANIZE BY ROW;
+
+
+CREATE TABLE "DRONES"
+(
+  "name" VARCHAR(20) NOT NULL,
+  "model" VARCHAR(20),
+  "owner" VARCHAR(20) NOT NULL,
+  CONSTRAINT "primary_key" PRIMARY KEY ("name"),
+  CONSTRAINT "owner_key" FOREIGN KEY ("owner") REFERENCES USERS("username")
+) ORGANIZE BY ROW;
+\end{lstlisting}
 \end{center}
-The sensors api endpoints are designed for the querying of historical data. They take a range of path parameters, such as the time window for sample data, and returns a JSON array of the relevant documents contained in the database.
 
-\subparagraph{GPS}
-\begin{center}
-	\begin{lstlisting}
-		GET api/:dronename/gps
-		GET api/:dronename/gps/:timeFrom
-		GET api/:dronename/gps/:timeFrom/:timeUntil
-	\end{lstlisting}
-\end{center}
-The gps endpoints are very similar to the sensors endpoints, but simply query the positionlog rather than the sensorlog database. The information should be present in the sensorlog database, but this provides a lighter weight access point for position data, for instance for plotting historical routes. 
+Due to previous experience with SQL, there were few issues with the creation or use of the SQL databases. 
 
+\subsubsection{API} \label{API}
+Due to the size limitations of the MQTT protocol, a different method is required to exchange files, such as the audio and images captured by the drone. Not only this, but the MQTT model is not suited for making queries for legacy data, or for static information; as a publisher/subscriber model it ideal for live data. Therefore, the HTTP protocol was used due to its ubiquitous support and obvious suitability. A REST API was created on the server, to facilitate ease of development and to conform to industry standards. 
 
-\subparagraph{Images and Audio}
-\begin{center}
-	<THE CODE>
-\end{center}
-The images and audio endpoints are for file handling. Similar to the sensors endpoints, they can be used to obtain historical files. However, as these file types can't be communicated over MQTT, the endpoints are also used for file upload from the drone. 
+A RESTful (representational state transfer) API is one that satisfies a range of constraints, including having a client-server model, being stateless, consider caching, and provide a uniform interface. As much as possible, the API in this server attempts to meet these constraints and largely succeeds. It follows a client-server model, is stateless (although the drone control behind the API is not), and provides a uniform interface, for instance by identifying resources individually through the URI. To ease development and due to the relatively low demand on the system, all responses are assumed that they cannot be cached, although in reality many could be. 
 
-\subparagraph{Users}
-\begin{center}
-	<THE CODE>
-\end{center}
-The users endpoints are primarily for admin management of user accounts. Individual accounts can be created, queried, and deleted. 
+An example of an API endpoint is given below. They are often provided in the format of a URI extension, which should be concatenated with the base URI for use. This endpoint would be used to obtain the resource described by the URI, that of an individual image captured by a specific drone.
+\begin{lstlisting}
+GET    /api/:dronename/image/:docID
+\end{lstlisting}
+In the API descriptions, `:\textless name\textgreater` indicates a variable parameter in the URI which the server can access\cite{expressDocs}. As mentioned in the sensor development, these are often validated, as can be seen in Table \ref{tab:RequestParams}. If a validation fails, an error HTTP response code is returned to inform the client of an error. A range of HTTP response codes are used within the API, to represent success (200), redirection (302), client error (4xx) and server internal error (500).
 
+\begin{table}[ht]
+\caption{Request Parameters\label{tab:RequestParams}}
+\centering
+\renewcommand{\arraystretch}{1.5}
+\begin{tabularx}{\textwidth}{>{\centering}p{1.5cm} >{\centering}p{1cm} >{\centering}p{3cm} p{5cm} X}
+Parameter & Type & Description & Validation & Failure Action \\ [0.5ex]
+\hline
+dronename & String & The set of databases to query & Request's cookie is checked to ensure it contains dronename & Return HTTP code 400 \\
+timeFrom  & Number & Timestamp in milliseconds since epoch  & Is checked to ensure it will parse to a number & Return HTTP code 400 \\
+timeUntil & Number & Timestamp in milliseconds since epoch  & Is checked to ensure it will parse to a number & Return HTTP code 400 \\
+type      & String & The type of sensor to data to collect & None & None \\
+username  & String & The username to act upon & Ensure the username provided matches that in the cookie, or that the client is an ADMIN & Return HTTP code 401 \\ 
+docID 	  & String & Timestamp in milliseconds since epoch & If the docID = "latest", the latest document to be uploaded is returned rather than a client specified docID & None \\ [1ex]
+\hline
+\end{tabularx}
+\label{table:requestParams}
+\end{table}
+
+This REST API evolved slowly. In line with the Agile methodology, from the very start the focus was on always to have something working. As an example of the process of development, the process of creating the Sensor endpoints is described below. At each step, it was made sure that the implementation worked correctly before progressing. Some steps, especially later, were part of larger redevelopments but the majority are specific to the Sensor endpoints. The purpose of this is to show the level of thought and constant development that it took to create this functioning API. Note that these are only GET endpoints, and therefore the simplest.
+
+\begin{itemize}
+	\item The first endpoint was added directly to the express object with `app.get()`, and `/getSensorData` simply returned a JSON dump of every document in the Cloudant database `sensorlog`
+	\item '/getSensorDataLatest' also used the inbuilt function to retrieve all documents, but to order by \_id descendingly and only return 1, hence returning the most recent document as the \_id is a timestamp. 
+	\item Once the Cloudant SDK was fully understood SECTION, querying the database correctly became possible.
+	\item The endpoint accepted URI query parameters, for instance `/getSensorData?timeFrom=14235786351`. A selector object was made, and sent to Cloudant as a query. This queried the \_id of the documents. A default value is provided for if no value is specified, allowing the same function and Cloudant query to be used.
+	\item The database was indexed for type correctly, meaning the selector could be expanded to include other fields, such as `/getSensorData?timeFrom=14235786351\&type=temperature`
+	\item Using the \_id as a field could cause error, as the internal comparison on the database treated the \_id and the selector field as a string. `2` would therefore be considered greater than `14235786351`, as 2\textgreater 1. The field `time` was added to documents and the database reindexed.
+	\item Minimum and maximum values were added to the selector, meaning both a time and value range could be used to select specific documents. These have since been disabled as they require ES6, which Bluemix currently doesn not have //FIXFUCKERS.
+	\item The functionality that an endpoint provided was encapsulated in a separate function, rather than being defined when added to the express object. The function was passed to `app.get()` as a callback function.
+	\item Path paramaters rather than query parameters were introduced for timeTill, timeFrom, and type. Varying endpoints were created, to support use of a more simple client query. 
+	\item Parameter checking was introduced, to ensure that the values of timeFrom and timeTill are indeed numbers, or the key-string `latest`, which would run the query triggered by `/getSensorDataLatest`
+	\item An express router was used, meaning the endpoints were added to the router object. This prefixed '/api/' to existing endpoints. 
+	\item Security was implemented, ensuring that a user had to be logged in to access these endpoints
+	\item The router and related functions were removed from the growing app.js file, and placed in their own files. This required extensive refactoring and testing.
+	\item Multidrone support was added, by adding dronename to all paths, and using the dronename to specify which database to query.
+\end{itemize}
+
+These steps, and similar steps for all other endpoints, have led to a reasonably comprehensive and effective API. A more detailed explanation of the API endpoints can be found in the Appendix (\ref{apdxRestApi}), whilst full user documentation can be found by accessing the public endpoint '/documentation/api', which was generated using apidocs\cite{apidocs}. This contains further details of the API, including how to use it, security restrictions, error messages, and parameter and response definitions.
 
 \subsubsection{Security}
-Security is an important issue for any system, especially for those that are connected to the internet. 
-\paragraph{SQL Database}
+Security is an important issue for any software system, especially for those that are connected to the internet. This can be regardless of whether an attacker gains anything, yet is even more important should that potential be there. Security threats regarding the NodeJS server are detailed in Table \ref{tab:SecurityThreats}, using the STRIDE methodology CITE.
+
+\begin{table}[ht]  
+\caption{Security Threats\label{tab:SecurityThreats}}
+\centering
+\renewcommand{\arraystretch}{2}
+\begin{tabularx}{\textwidth}{>{\centering}p{1.5cm} >{\centering}X X X}
+Threat & Description & Practical Method & Prevention \\ [0.5ex]
+\hline
+Spoofing & Pretending to be somebody else & Edit cookie `user` value & Make cookie inaccessible to user \\
+Tampering & Modifying without permission & - Access a POST or Delete endpoint \newline - Edit cookie values of username, drones, or role & - Restrict API access to those with session \newline - Make cookie inaccessible to user \\ 
+Repudiation & Denying to have done something & Edit any data on the server & - Restrict API access to those with session that contains username \newline - Log all API accesses \\
+Information Disclosure & Revealing information wtihout permission & - Access any GET endpoints without login \newline - Access GET endpoint without authorisation & - Restrict API access to those with session \newline - Contain Role within cookie, and restrict access to certain endpoints dependent on role \\
+Denial of Service & Prevent a system from providing service & Overload the server & - Ensure adequate asynchronicity in NodeJS code to handle requests \newline - Rely on Bluemix front server for protection \\
+Elevation of Privilege & Achieve more than what is intended or allowed & - Access any endpoint which doesn't match the Role \newline - Edit cookie containing role & - Restrict access to certain endpoints dependent on role \newline - Contain Role within cookie, and make cookie inaccessible \\
+\hline
+\end{tabularx}
+\label{table:securityThreats}
+\end{table}
+To mitigate these threats, it is clear there is a requirement for a user to have a registered account, with a session cookie for when they log in containing relevant data, that is both tamper proof and should not be used by others. These requirements are satisfied by the use of session cookies and user accounts as described below. Also, to prevent the theft and reuse of a cookie, all transport should be done over SSL, namely HTTPS and WSS. Any request that is not over HTTPS is redirected to the HTTPS version of the URI. Whilst this is not enforced on local development, it is implemented on the Bluemix implementation.
+
+
+\paragraph{Session}
+One of the most standard characteristics of a client-server connection is the use of a session token or cookie. Often, the implementation revolves around the cookie containing a random session id when a user first connects, and the server stores session details locally using this id.  Depending on the information stored for each session, the server can deny or allow access to specific resources. However, this encounters problems when scaling to larger than one server. Data either has to be replicated across all servers, stored in a central or single remote store, or ensure that a user always connects to the same server\cite{mozillaClientSessions}. These have obvious disdvantages, such as larger latency, inconsitency concerns, and availability issues. 
+
+One very simple and efficient solution is `client-side sessions`, which means that the session information is stored by the client, in the form of a HTTP cookie. When a client connects or makes a new request, the server can access the session data by reading the cookie sent with the information. However, it does present the obvious security flaw in that a user could tamper with a plain text cookie, perhaps to change their username to that of an admin. Therefore, it must be made tamper-proof by encrypting it\cite{mozillaClientSessions}. 
+
+Therefore, the NodeJS module `client-sessions` by Mozilla was used as a stable and well-supported solution to using sessions\cite{client-sessions}. This is implemented as middleware for express, and is completely automated. After initial setup, providing a random string as an encryption key, the session details of any request can be accessed using `req.session.\textless property\textgreater`. As well as default values such as expiry time, the cookie used by this project contains the following properties:
+\begin{center}
+\begin{lstlisting}
+	{
+		user   : <username>,
+		role   : <role>,
+		drones : [<droneOneName>,<droneTwoName>,..]
+	}
+\end{lstlisting}
+\end{center}
+user represents the username registered in the SQL database, and is used both as the variable to ensure a client is logged in and to restrict access to other users' accounts. Role is an enumerated int that signifies the role of a client. For instance, a client with RoleEnum.ADMIN can access any API endpoint, whereas client with RoleEnum.GUEST can only access GET endpoints. drones is an array containing all the dronenames registered to the user in the SQL database, preventing or allowing access to any drone specific endpoint. The use of this cookie greatly reduces the risk of spoofing, tampering, information disclosure, and elevation of privilege. 
+
+In much the same way as a regular session id, if an attacker manages to capture a valid cookie then they could use this to impersonate another user. There are three main ways that this risk is mitigated. Firstly, the server can refuse any non-https connections, and the client-sessions module can be configured to only be sent over https. However, this does not stop an attacker at the end of HTTPS connection, nor does it prevent a user sending a valid cookie over HTTP. Secondly, the cookie has an expiry time, meaning an old cookie will not be valid. This is currently set to 24 hours, but could be reduced for greater security\cite{mozillaClientSessions}. The final approach is the availability of a `/logout` URI which forcibly resets the session. 
+
+
 \paragraph{User Accounts}
-\paragraph{File Checking}
+User accounts are a standard method of regulating access to data and services. When the security of the system was considered, it quickly became clear that a well defined and efficient solution would include the use of user accounts. These details cannot and should not be stored on the server itself, both for security reasons, and to ensure persistence should the server restart. Therefore, remote storage was required, and an SQL database was used as described in \ref{SQL}.
 
-\subsection{Drone Control}
+\subparagraph{Roles}
+Each user is assigned a role on account creation, defaulting to the lowest level, `guest`. Each role allows access to a different level of API, with cumulative effect. `guest` can access GET endpoints, `user` can access POST and DELETE endpoints, and an `admin`can access the user POST and DELETE endpoints. An `admin` also has the ability to access drone specific endpoints to a drone they are not registered with. 
 
-\subsection{Android Extension}
+\subparagraph{Drones}
+When the system began to support multiple drones, there arose the need to manage the access each drone separately. A user should not be able to access data or control drones that do not belong to them, both for data security purposes, but also to ensure a reliable system that is more robust to misuse, be it intentional or accidental. Therefore a record of drones must be kept, and which user they belong to. This requirement was satisifed with the DRONES table in the SQL database. When a user logs in, a list of all drones registered to them is added to the client-session cookie, as described above. This list is updated whenever a user adds or removes a drone. 
 
-\section{Testing}
+In this system's implementation, the restrictions above are enforced by assessing the value of the cookie at the appropriate point - before the client gets any access to the restricted area. This is usually in the URI parameter checking, as described in \ref{API}. 
+
+\paragraph{File Validation}
+Once logged in, a user is able to download files from the database, such as images and audio. These should be trusted, and the easiest way to ensure they are not malicious is to assess the file on their way in, when they are first uploaded to the server. Therefore, when a file is uploaded a validation operation occurs, which uses NodeJS modules such as file-type \cite{file-type} to ensure that the file is either a valid JPEG, WAV, or MP3 file. If it is valid, the file is passed onto the database. If it is not, the file is deleted. 
+
+
+\subsubsection{Drone Control} \label{DroneControl}
+Once data has returned from the IBM analytical services, or directly from the drone if it is basic data such as sensor readings, it must be evaluated. This is done on the main NodeJS server, which is the most suitable location; it has access to all relevant data, and has spare processing power due to the asynchronous nature of NodeJS meaning the CPU demand from the API is very low. 
+
+The drone control in this system implementation is more a proof-of-concept than a concrete solution, in line with the nature of the project. Whilst the module has been formulated to satify the requirements specified in the Interim Report, and acts appropriately in predetermined scenario, it is not an extensive AI system. However, it has been structured in a manner to support extension and expansion easily. 
+
+The architecture is comprised of a 1:N:N relationship. Incoming data is passed to a single \texttt{DroneCoordinator} object, which is instantiated when the main server starts. When this coordinator receives any data, it checks if a handler for the specific drone exists. If so, it passes the information to the handler. If not, it first creates a \texttt{DroneHandler} object before passing information to the new handler, and adds the \texttt{DroneHandler} to its `handlers` dictionary. The coordinator therefore acts as a simple `steering` class. Choosing to control the lifetime of the handlers like this is far more succinct and efficient than the alternative of having a handler in existance for every registered drone. The overhead of the handler existance check can be considered negligible. The final component of the relationship is the drone, which each \texttt{DroneHandler} has a connection too via MQTT; the MQTT handler and Cloudant object are passed down through the \texttt{DroneHandler} and \texttt{DroneCoordinator} constructors. 
+
+Each \texttt{DroneHandler} object has functions to handle information passed from the \texttt{DroneCoordinator}, which typically save the data to its `modeFactors` object with a timestamp, and then passes it to the `currentMode` object for more immediate handling. `currentMode` represents the current state or mode that the drone is currently in. Whilst this is completely abstracted from the drone itself, each mode can completely control the drone's action. There are 5 modes implemented, with an order of inheritance. BaseMode contains a large amount of the standard functionality, such as functions to log to the Cloudant database, to send commands to the drone (separated into MavLink and Pi commands), and a shell implementation of the data handling functions such as `handleImageLabels`. These shell implementations just log incoming data, and are for examples rather than intended use. The NormalMode inherits from the BaseMode, and is the object the \texttt{DroneHandler} instantiates on start. The NormalMode doesn't do much more than the BaseMode, but implements a minimum time limit between logging events from images. AvoidanceMode, FireMode, and InteractMode, all inherit from NormalMode, and are shell implementations. 
+
+What the latter three modes do provide, however, is an action when the mode is switched. When the object is created, by the \texttt{DroneHandler}, they send an appropriate command to the drone. FireMode raises the drone's elevation, and commands it to hover for 30 seconds, awaiting manual override. Interact sends a hover command, and also starts audio streaming as oppose to static file upload. Avoidance //TODO. These are simple actions to satisfy the proof-of-concept scenarios, yet highlight how a new mode could be easily added and implemented by the user. After extending a custom mode, the user would also have to determine when the mode was entered. This is controlled by the \texttt{DroneHandler}.
+
+As previously stated, the \texttt{DroneHandler} contains a `modeFactors` object, which contains filtered data from the \texttt{DroneCoordinator}. Periodically, this data is assessed to determine the mode that the drone should be in. On a positive change, the `currentMode` object is reassigned to a new Mode object. Initially, the data from input function was assessed as it came in, but this prevented the mode being changed due to a combination of inputs, hence the introduction of the modeFactors object. The determineMode function is designed to run quickly and efficiently, the need for which is explained below. It is therefore a large collection of \texttt{if} statements which tests the \texttt{modeFactors}, for instance checking if the temperature readings are above a certain level, or if an image label is above a certain threshold. These tests can be combined, such as requiring a mode change if two factors are above a lower, less-strict threshold. This is designed to be simple to understand, allowing a user to easily add in new conditions, that when satsified a custom mode can be entered. If they wish to extend the DroneHandler, for instance they only wish a certain category of drone to be able to enter a custom mode, this is again achievable and would only require a simple \texttt{if} in the \texttt{DroneCoordinator} to determine which handler should be instantiated for a certain drone.
+
+The data which controls the mode comes in from a variety of sources, including the audio API, the images API, and MQTT messages. Therefore it would be fairly intensive to call a function to check all recent data everytime a new piece comes in, which could be multiple times a second. Given that a NodeJS instance is operated on a single thread, thought must be given towards synchronous actions which run regularly, as whilst running they block the server and reduce availability. Therefore, the function `determineMode` in \texttt{DroneHandler} is run at intervals of one second - a response time which is suitably short enough to respond effectively, yet not short enough to block the server. Whilst the function determineMode is running, the server can do no other actions.
+
+
+\subsection{Android}
+\subsubsection{Design Overview}
+As stated in the Project Specification, the design for the Android app was heavily based off the IBM IoT Starter app\cite{iotStarterAndroid}. This consists of an application which holds 3 views, or fragments, which are changed by swiping across the screen. The activity is support by a number of background utils classes. Whilst the same structure and basic fragments were reused for ease of development, there were major additions and significant alterations to both the fragments and the utils. 
+
+The majority of the development for the app focussed on functionality and expansion, but later development also enhanced the user experience by reducing the liklihood of app crashes by catching exceptions, and giving feedback during background processes such as login and legacy data querying. 
+
+\subsubsection{Main Application and Activity}
+\texttt{DroneApplication} is the main overarching class, yet has little functionality. Its main purpose is to be an ever-present datastore, with a variety of getters, setters, and manipulation. This is required due the fact that the fragments, which will use the data, will be created and destroyed whilst the app is in use. 
+
+\texttt{MainActivity} is, as the name would suggest, the primary Activity, which is the Android concept of a "single, focused thing the user can do"\cite{androidActivity}. Due to this app being relatively simple, this encompases the entire app. This class is the container for the toolbar and tabs at the top of the screen, and contains a \texttt{ViewPager}. The \texttt{ViewPager} is the critical object in charge of the fragment creation, management and destruction. They are very common in Android apps, presenting the user with a tab based interface. Simplistic design is often a characteristic of an app with a good user experience, as well as standard design. \texttt{ViewPager}s are very common, well understood, and simple for a user. 
+
+This activity class also manages the ability to change the `drone focus`. The drone focus is the app's solution to multidrone support. Whilst some fragments show the same information regardless of which drone the user is currently concerned with, others can only show data from a single drone at a time. The drone of choice is the `drone focus`. When this changes, the fragments react appropriately, reloading or removing old data. 
+
+\subsubsection{Utils}
+The utils comprise of helper classes, which are not user facing and tend to exist in the background. Unlike fragments, they are not created and destroyed multiple times in normal app usage. \texttt{MqttHandler},\texttt{TopicFactory}, and \texttt{ActionListener} are for the background communication with the MQTT broker, and are largely unchanged. The one notable exception is that the app was changed to connect and behave as an `application` rather than a `device` in terms of the MQTT broker's classification. This was to enable the app to subscribe to topics from the Pi. Note this required some clarification from IBM developers, as the app client generated no errors, yet simply did not receive messages from the Pi\cite{githubTopicIssue}. The \texttt{MessageConductor} was responsible for handling received incoming MQTT messages. Typically, this was by storing the data in the \texttt{DroneApplication}, and then broadcasting an intent (a simple message) to notify the fragments. This concept was adapted from the basic app, but was improved. Originally, the broadcast were done with a global BroadcastManager. This is not only a security risk as it means other apps can tap into the data, but it is also an unecessary overhead. This was replaced with a local, intra-app broadcast. The intents were also changed. Originally, the currently visible fragment's name was used as the tag, and then filtered by the fragment to detect their own name. However, this creates issues when non-visible fragments require updating. The intents were therefore classified by type, ie sensor data, and fragments filter intents by the type they wish to handle. This removes a large amount of conditional code in the \texttt{MessageConductor}, and is a much cleaner design. The \texttt{HybiParser} and \texttt{WebSocketClient} were obtained from the module AndroidWebsockets\cite{androidWebsockets} to support the use of websockets for audio streaming.
+
+\subsubsection{Fragments}
+The fragments are the major user facing views, and handle most of the apps functionality. These are held with the \texttt{ViewPager}, 3 at a time, with the central fragment visible. The objects are created and destroyed when the \texttt{ViewPager} holds or releases them, and therefore make extensive use of onCreate and onResume to load data from the \texttt{DroneApplication}. onCreate and onResume are overridden functions from the fragment lifecycle, and are called automatically when the \texttt{ViewPager} instantiates the object. The use of SharedPreferences is used to store information between app runs. These are app-specific small variables stored on the disk of the Android device.
+
+\paragraph{Connection}
+The connection is a login page, where the user provides required credentials. This includes details for the server API, such as address, username and password, and details for the MQTT connection, such as an API key and token. These are saved in the SharedPrefences, and are loaded from file when the app boots. If the `Connect` button is pressed, the device establishes connections. It logs into the server to access the API, and loads information about the available drones. It then connects to the MQTT broker, and subscribes to the appropriate drone topics.
+
+\paragraph{Video}
+Although called Video, this fragment has 2 separate input streams; regular static images, and an audio stream. These are both from API endpoints, specific to a specific drone as specified by the current drone focus. The images are loaded one by one and, although initially polled, image loading is triggered by an MQTT trigger sent by the server when it receives a new image upload. Polling is avoided when possible, as it creates a large overhead. A better alternative is to use inbuilt services such as the MQTT service, which provides similar functionality, yet is better as data is `pushed` rather than `polled`. The audio stream is supplied by a websocket connection to the server. If the drone is in the correct mode, it will upload messages containing raw audio data to the server. This is then forwarded by the server to any listeners who have connected via the appropriate API endpoint, one of whom would be the app. The audio stream was included for reasons described in \ref{Streaming}.
+
+\paragraph{Control}
+The \texttt{ControlFragment} is mainly a legacy fragment. It was developed during the delays in the arrival for the hardware, and was aimed at being a method to control the drone. It presents the user with 2 D-Pads, similar to a remote control transmitter. Using the \texttt{RepeatListener} util, it sends MQTT messages at a predefined rate while a button of the D-Pads is depressed. The concept was that a user would be notified of the results of the data analysis by the server, and where appropriate take command of the drone. However, it became clear once the hardware arrived that a real remote control trasmitter was an essential part of drone flight for a drone of this weight and size. The ability to control the drone through the app was therefore not needed; indeed, when commanding through the app it means none of the other tabs can be used, rendering the app pointless. In future development of the app this fragment would be removed.
+
+\paragraph{Log}
+\texttt{LogFragment} is the simplest of all the fragments, and is simply a list of events. It logs app information, such as when the app successfully connects to the MQTT broker, and also events that the server has identified, such as drone mode changes. 
+
+\paragraph{Map}
+The purpose of the app is to provide information to the user, not only raw data as in the Video fragment, but also analysis from the cloud services. The \texttt{MapFragment} is a canvas for Google Maps. A map is perhaps the most useful form feedback for a search and rescue user, and the \texttt{MapFragment} shows two types of data; the current location of any and all relevant drones, and the locations of server identified events. For instance, keywords identified as relevant by the \texttt{DroneHandler} in the server are forwarded along with a GPS position, and this information shows up on the map as a fragment. This data is all updated by the server publishing the information to MQTT topics which the app is subscribed to.
+
+\paragraph{Graph}
+The \texttt{GraphFragment} presents an interface for both live and legacy data, which is plotted using a plotting library, androidplot. Live data can be used both to monitor flight information, such as altitude, but also data which is relevant to search and rescue, such as temperature and air purity. This data comes from a drone via MQTT, and is enabled with a checkbox on the page. As well as live data, legacy data can be viewed and plotted, to allow comparison or review of previous flights. A user provided timeframe is used to query the database via the server API, and is remembered and loaded for future use. An interesting and tricky aspect of this was the timeframe selection. Due to the system synchronisation, milliseconds since epoch is used as a timestamp, and this is the format of the web API. However, this isn't user friendly. Therefore effort was put into creating a suitable data selection method, which is seen when loading legacy data, combining both an Android DatePicker and TimePicker objects. A number of different methods of displaying the timeframe selection and loading the data were implemented, but eventually the combination of a custom dialog and an asynchronous task were used. This is due to the fact that previous methods, including thread calls and fragments, were fairly slow, taking a second or two to show. 
+
+Another difficult issue with this fragment was correctly plotting a time series. The majority of charting libraries don't easily support charts which have live data and are a time series, with missing or intermitent data. Initially, a library called MPAndroidChart was used, but was exchanged in place for androidplot when these issues became apparent.   
+
+\section{Testing} \label{Testing}
+
+\subsection{Some test I ran}
+Got  x files. Tested Pi bandwidth, measured system time + mqtt time. 
+
+\subsection{Latency and Bandwidth}
+
+To test the quality and compression of the data provided by the drone, to determine an ideal level, a series of files were created with varying characteristics. For audio, both mp3 and wav files were made at four different sampling frequencies of a 5 second snippet of the words `this is a test recording to test the latency of the services`. For images, photos were taken with the PiCam at four different resolutions, each with four levels of compression. Scripts were written to sequentially upload the files to the server at specific endpoints. These endpoints go through the motions of uploading the files to the database and services, but discards any response instead logging the time taken for a process. A command is then sent to the Pi in a similar manner to that when the DroneHandler changes mode. The Pi logs this command, which contains information about the file upload which triggered it. Using a combination of these scripts and endpoints, an assessment of the latency of the system end-to-end can be determined, as well as the duration of different sections of the system. 
+
+\subsubsection{Audio}
+As described above, a total of eight fiels were used to test the audio latency, all sampled from the same original audio. The wav files are uncompressed signed 16bit PCM audio, whilst the mp3 are compressed versions of these using a variable bitrate of 170-210 kbps. The upload bandwidth was tested using a command-line speedtest tool, and was measured as 0.87Mbits per second. The measured time was compared to the theoretical upload time, and was measured as about 150% of the expected duration. The time for recognition was a large proportion of the system response time, but is unavoidable, and unchangeable. 
+
+\begin{table}[ht]  
+\caption{Audio Upload Latency Test}
+\centering
+\renewcommand{\arraystretch}{2}
+\begin{tabularx}{\textwidth}{>{\centering}p{1.5cm} >{\centering}X X X X X}
+File Name & File Size (Bytes) & Time To Upload File To Server (ms) & Time for Recognition (ms) & Confidence Level & Total Round Trip (ms)\\ [0.5ex]
+\hline
+5sec16khz.mp3	&35784	&		&	&&\\
+5sec16khz.wav	&161376	&1948	&	&0.855	&6208\\
+5sec2205.mp3	&44990	&		&	&&\\
+5sec2205.wav	&222380	&2515	&4435	&0.854	&7178\\
+5sec32khz.mp3	&60192	&1291	&3527	&0.866	&5043\\
+5sec32khz.wav	&322708	&3758	&4243	&0.853	&8136\\
+5sec4410khz.mp3	&67388	&1701	&4139	&0.863	&6281\\
+5sec4410khz.wav	&444717	&6114	&4075	&0.852	&10490\\
+\hline
+\end{tabularx}
+\label{table:securityThreats}
+\end{table}
+
+This table highlights a few pivotal aspects of the audio side of the system. Unsurprisingly, the part of the system most affected by the varying files is the upload to the server. The time for recognition does not appear to have a strong correlation with file size, and is fairly constant. Although the mp3 files take slightly longer for recognition, due to the need to decompress the file on the server, this delay is dwarfed by the reduction in upload time from the reduced file size. The mp3 compression reduces the file size by about a factor of 5. Whilst this doesn't directly compare directly to the reduction in upload time, the factor is still significant. Also worth noting is the changes in the feedback from the services from the sample files. The file contained speech of the words `this is a test recording to test the latency of the services`, and almost all of the tests returned a correct transcript, but with the word `cast` replacing `test`. The exceptions, interestinly, were the two higher-quality mp3 files. The confidence levels were very close for all tests, but again the larger mp3 files had a slightly higher confidence level, as well as a more accurate transcript. With the added bonus of reduced system latency, without a doubt mp3 files should be used in place of uncompressed wav files.
+
+\subsection{Images}
+
+\begin{table}[ht]  
+\caption{Image Upload Latency Test}
+\centering
+\renewcommand{\arraystretch}{2}
+\begin{tabularx}{\textwidth}{>{\centering}p{1.5cm} >{\centering}X X X X X}
+File Name & File Size (Bytes) & Time To Upload File To Server (ms) & Time for Recognition (ms) & Total Round Trip (ms)\\ [0.5ex]
+\hline
+854x480q25.jpg	&131410	&2495	&4508	&7129\\
+854x480q50.jpg	&210704	&2970	&4563	&7988\\
+854x480q75.jpg	&242387	&2529	&4420	&7398\\
+854x480q100.jpg	&242865	&3012	&4674	&7750\\
+1280x720q25.jpg	&248088	&2568	&4268	&7238\\
+1280x720q50.jpg	&422648	&3979	&5063	&9543\\
+1280x720q75.jpg	&438770	&4649	&4573	&9404\\
+1280x720q100.jpg	&490461	&4829	&4428	&9704\\
+1600x900q25.jpg	&491232	&14579	&4946	&19853\\
+1600x900q50.jpg	&583696	&6532	&4928	&11615\\
+1600x900q75.jpg	&726705	&7320	&4978	&12418\\
+1600x900q100.jpg	&828239	&7536	&5203	&13095\\
+1920x1080q25.jpg	&832288	&5401	&4304	&9817\\
+1920x1080q50.jpg	&983489	&8979	&5611	&14713\\
+1920x1080q75.jpg	&1128539	&10329	&4625	&14988\\
+1920x1080q100.jpg	&1128728	&9899	&5401	&15399\\
+\hline
+\end{tabularx}
+\label{table:securityThreats}
+\end{table}
+
+Similar to the audio, these measurements again indicated that the file size directly affects file upload time and therefore system response time. Again, the time for recognition is fairly constant, but now with a slight addition correlating to increasing image file size. What is noticable from the table is that for the images with higher resolutions the response time is very large, well over 10 seconds. This is too slow to be used in a real-time system, and should be avoided. The compression level has a significant effect on file size and subsquently response time, with high compression saving up to 45% of the upload time. Therefore, the effect that resolution and compression have on the confidence and content of the service feedback must be inspected in more detail. 
+
+Look at the feedback
+
+\subsection{Other Variables}
+By subtracting file upload time and recognition time from the above, we are able to determine the time between when an MQTT command is issued, and when the Pi receives it. Although the times measured did vary between 100 and 450ms and had high variance, there was no relation to the corresponding file. The average MQTT time was evaluated as 251ms. This is a fixed latency that cannot be altered, and supports the use of MQTT to implement commands; a reasonable time between the Pi polling the server for commands, added with the duration of the poll, would be longer than 250ms. 
+
+During the tests above, a command was sent as soon as service feedback was added. However, in a live system, there would be a delay of 0-1000ms, due to the time between the feedback arriving, and the DroneHandler detecting that it should change mode with its determineMode function, running on an interval of 1000ms. 
+
+
+
+
+
+
+
+\subsection{Mocha}
+Once a simple implementation of the server existed, the concept of testing to verify the implementation was considered. Whilst not engaging in pure test driven development (TDD), testing is a vital part of this project to ensure the server behaves as it should, and that future expansions or improvements do not break the codebase or lead to unexpected behaviour. It proved very valuable throughout the project. Not engaging in pure TDD from the start turned out to be a suitable decision, as due to major reworkings of the server mechanics throughout the project many early tests would have been rendered useless. This was due in part to a developing knowledge and understanding of NodeJS and asynchronous code leading to a better solution, that was unfortunately incompatible with previous tests. 
+
+The RESTful nature of the server, in that it should as much as possible be stateless, leans towards unit-testing. This means that each endpoint or functionality can be tested indiviually and independantly. Indeed, the correct way to way to test a REST API is with a unit test\cite{mardan2014tdd}, and later in the project, TDD was employed for the support of the drone endpoints. The testing framework of choice was Mocha, as it the industry standard for NodeJS; the majority of the modules used by this project are themselves tested with the Mocha framework. Although other frameworks such as Jasmine\cite{jasmine} were considered, it is clear that Mocha is generally regarded as the most suitable for asynchronous NodeJS testing\cite{testingReview}. 
+
+The Mocha framework was expanded with modules to verify the test, such as `should` and `assert` to ensure that the response is as expected CITE THEM ALL?. The Mocha framework then works by running a series of described tests serially, with optional hooks before and after. So for instance, a file upload test could run a before hook to login, run the test, and then run an after hook to delete any uploaded file. Initially, following a blog tutorial\cite{thewayofcode} the tests were run by creating a local instance of the server, and then running the tests by running the test requests on the server by using `http://localhost:8080/api/...`. However, when deploying to Bluemix this is not ideal, see as in the Continuous Delivery Pipeline \ref{ContinuousDelivery}, the tests are run in their own container. Without deploying an instance first, it would be difficult to test correctly. Therefore the module supertest was added, and the tests are run against the server object directly, as described in the supertest documentation\cite{supertest}.
+
+A small example of API testing is below. Note that this is somewhat simplified.
+
+\begin{lstlisting}
+var server = require('../app.js');
+function loginAdmin(done){
+	request(server)
+		.post('/login')
+		.auth('jake','pass')
+		.expect(200)
+		.end(function(err, res){
+			if(err){ throw err; }
+			cookie = res.headers['set-cookie'].pop().split(';')[0];
+			done();
+		});
+}
+
+describe("Image Endpoints", function() {
+	beforeEach(loginAdmin); 	
+	var time = new Date().getTime();
+	it('GET /api/images should return imageFile list', function(done){
+		request(server)
+			.get('/api/pixhack/images')
+			.set('cookie', cookie)
+			.expect('Content-Type', 'application/json; charset=utf-8')
+			.expect(200, done);
+	});
+	it('POST /api/images/:docID should accept valid image', function (done){
+	  request(server)
+		   .post('/api/pixhack/images/' + time)
+		   .send({time:time, location:[50,50]})
+		   .attach('image', 'test/sampleFiles/testImage.jpg')
+		   .set('cookie', cookie)
+		   .expect(200, done)
+	});
+});
+
+after(function (done) {
+	var dirPath = './uploads';
+	var files = fs.readdirSync(dirPath);
+	if (files.length > 0) {
+		for (var i = 0; i < files.length; i++) {
+			fs.unlinkSync(dirPath + '/' + files[i]);
+		}
+	}
+	done();
+});
+\end{lstlisting}
+
+This snippet represents two tests, working on image endpoints. Before each test is run, an admin login occurs. This happens for every test so that they are independant; it should be possible to run just one of the tests and for it to succeed. The tests both run, with any exceptions caused by an `except` being thrown, before the after function is called to remove any files that were uploaded.  
+
+As well as testing the REST API, tests were made both for the functionality of the drone control, and for ensuring correct behaviour when given suitable stimuli. For instance, a test to ensure that when a sensor reading is uploaded it is saved to the database. The Scenario testing was to ensure that the system would react correctly to the scenarios defined in the Interim Report as part of the evaluation method. A small (modified) excerpt is included below, showing a scenario test for fire. 
+
+\begin{lstlisting}
+var mqttHandler = {
+        sendCommand : sinon.spy(),
+        sendEvent: sinon.spy()
+    };
+	
+var IandC = new iandc(mqttHandler, cloudant);
+
+function getModeNameWithDelay(callback){
+	setTimeout(function(){
+		callback(IandC.getModeName())
+	}, 1100);
+}
+
+describe("Fire", function () {
+	beforeEach(function(done){
+		IandC.reset();
+		mqttHandler.sendCommand.reset();
+		done();
+	});
+	it('should be triggered by images', function(done){
+		var fire = [{name:"Wild_Fire", score:0.8}, {name:"Rainbow", score:0.53}];
+		IandC.processImageLabels(fire, new Date().getTime(), [10, 10]);
+		getModeNameWithDelay(function (result) {
+			assert.equal(result, "Fire", "Modes do not match");
+			assert(mqttHandler.sendCommand.calledOnce, "MQTT Command not sent");
+			done();
+		});
+	});
+});
+\end{lstlisting} 
+
+In this, Sinon spies and stubs are used\cite{sinon}. These are mock objects that can be used to monitor behaviour. Here, mqttHandler has been defined as an object containing two spies, which is then passed to the \texttt{DroneCoordinator} constructor. Then, during test, if the \texttt{DroneCoordinator} module calls a function on the mqttHandler, the spy records this action. This can then be tested with assertions later. The use of getModeNameWithDelay is due to how IandC changes its mode, as described in \ref{DroneControl}. The mode is changed at most once a second, with a delay of up to a second following suitable input. Therefore a delay of 1100 milliseconds is added before getting the mode that the drone is currently in.
+
+If all API endpoint tests pass, and all unit tests and scenario tests pass, it can be assumed that the system would react as specified in the tests in-situ. Given that the specified behaviour directly relates to the scenarios from the Interim Report APPENDIX, the system satisfies the requirement to have this behaviour. 
+
+\subsubsection{Istanbul}
+Code coverage is a measurement of the level of source code that is executed when a test suite is run. It is a core metric when evaluating a system and the effectiveness of its test, and was used as a tool in this project to ensure that as much of the codebase was tested as possible. The NodeJS module Istanbul was used to analyse code coverage, due to its ease of use, and well-formatted output\cite{istanbul}. This tool simply wraps around and runs Mocha, inspecting the code that is executed. A detailed HTML report is then generated, which shows exactly whichs lines of the codebase are executed, how many times, how many branches were taken, and so on. 
+
+
+\subsection{Continuous Delivery} \label{ContinuousDelivery}
+Continuous delivery is a methodology, whereby following a commit, the build, test, and deploy stages of a development lifestyle are automated. Automation, encompassing building, testing, and deploying, is not only time-saving, it can greatly increase the reliability of the code. The automatic flow of commit -\textgreater build -\textgreater test -\textgreater deploy means that no step can be skipped; if one step fails, the following steps are not executed. This means that the test step does not use existing executables if the build fails, and code which fails tests is not deployed. This, unsurprisingly, leads to more reliable code. As long as the build and test requirements are stringent enough, no ‘broken code’ should ever be deployed\cite{co475}.
+
+IBM devOps includes support for a continuous delivery pipeline. With this, a custom pipeline was setup. A git repository hosted by IBM acts as the starting point. When a push is made to this repository, it triggers a build phase, which for JavaScript is fairly simple and involves create a snapshot of the repository. This snapshot is passed to a test phase, which runs the Mocha tests specified above. Upon passing all specified tests, the snapshot is sent to a deploy stage, which installs all necessary packages and requirements to the Bluemix server, and deploys the application. 
+
+
 
 
 
 \section{Results}
 
+Show a graph. xaxis is bandwidth, with y axis being system latency. Model - inputs are available bandwidth, desired latency, output is sampling + res
 
 
+
+\section{Further Extension}
+After the end-to-end system was established and working, expansions were considered. These were listed in the Interim Report as:
+\begin{itemize}
+    \item Self-navigation and route planning of the drone around a provided map
+    \item Generation of a map from the drone's route and sensor measurements
+    \item Better way of presenting data, such as plotting flagged events on a map, or providing an interface to access logged data
+    \item Expansion of the system to accommodate multiple drones. Given the design and structure of the system, this should require minimal work
+    \item Searching for a known or provided face within a crowd, using Facial Recognition
+\end{itemize}
+\subsection{Better data presentation}
+Due to the delays as described in \ref{MajorDelays}, the data presentation methods of plotting flagged events on a map and providing access to logged data were implemented early on in the project. The map presentation is present in the Android app, as is the accesing logged data which is assissted by the API endpoints. 
+
+\subsection{Multidrone}
+Given the timeframe, the most straightforward expansion was chosen, that of accommodating multiple drones. The result of this expansion was a success, and so it has been incorporated into the rest of the report rather than a dedicated section. However, here is detailed the method. Due to the use of a REST API, and the structure of communication methods, this was fairly simple to implement, although there were quite a few tasks to do. Due to the fact that this would require many changes across all aspects of the project, a separate git branch `multidrone` was used for this development. 
+
+Given that the project was now well established and stable, new Mocha tests were added for the drone API endpoints before they were built, in a TDD manner. Following this, the following development steps were taken. 
+
+Firstly, the drones must be registered. The nature of the drone details was similar to that of user accounts, in that it was specified static data which changed infreqently, and therefore was suited to be saved in a new SQL table. The definition of this table is included in \ref{SQL}. NodeJS functions were then written, based off the User functions, to post, get, and delete these details, and appropriate api endpoints were established. 
+
+Secondly, the storage of data captured by the drone was considered. Although given the nature of Cloudant the databases could have been shared, by simply adding a property `dronename` to the documents, this would have required more refactoring of existing database functions. Therefore, given the ease with which it is possible, the creation of a new set of databases for each drone when it registers was implemented. The names of these are prefixed with the dronename which must (enforced by SQL) be unique. These are equally easy to delete. The creation and deletion of the Cloudant databases is cascaded from when a drone is added or deleted from the SQL database. 
+
+Thirdly, communication was considered. All drone specific API endpoints, so anything which queries the Cloudant service, had the path parameter :dronename prefixed. This parameter was then used to generate the relevant database to query, such as `pixhack\_sensorlog`. This meant that the majority of the Cloudant query functions only needed one line changed in total, to change the database name. The changes in these endpoints were updated in the drone and Android repositories. This resolved all HTTP requests. The MQTT topics also needed changing. Similarly to Cloudant, the same topic could have been used with sent information containing a relevant dronename property which could be checked, but this leads to heavy use of a single topic, and huge information redundancy and insecurity; any client listening to the topic will receive all data from every drone. A simpler approach is to change the topic names. This was simple to do, as the topic already contains an identification parameter, and all that was required was to change this parameter to match the dronename. This does create an issue however, as any device name must be registered with IBM's MQTT service in advance of connection. Therefore, just as the Cloudant databases' existances are cascaded from the SQL drone creation and deletion, so too is the registering of devices with the MQTT service, again through provided NodeJS functionality. The details that a user needs to connect with the drone are supplied in the response.
+
+Next, the drone management in the server was assessed. Before this expansion, it existed as a single 'InterpretAndControl' (IandC) module. However, to support multiple drones there would have to be multiple instances of this module, and some method of directing traffic to the relevant drone. Therefore, the IandC module was encapsulated within a \texttt{DroneHandler} object in a separate file, and a \texttt{DroneCoordinator} module was created that managed all the handlers. When any incoming traffic is received by the coordinator, for instance a sensor reading, then it checks if a handler for the specific drone exists. If so, it passes the information to the handler. If not, it first creates a \texttt{DroneHandler} object before passing information to the new handler. This required a substantial refactoring of the code base, as not only were the handlers changed as described above, but every time data is sent to the \texttt{DroneCoordinator} is must be accompanied by the drone name, which meant minor alterations to some of the API endpoints.
+
+The last aspect of the core system was security, and ensuring that users could only access information or create information regarding drones that are registered to them. This meant updating their cookie, in a similar way to a users role, so that each time they attempt to access drone relevant data the cookie can be checked to ensure the client is valid. This was added to the login function. Once the user's credentials have been checked and are valid, another request is made to the SQL database, requesting all drones who have the user as their `owner`. Any returned dronenames are added to the user's cookie. Later, if any drones are added via the API then their names are also added to the cookie, and likewise for deletion. When any API request contains :dronename in the paramaters, the value of this is checked to ensure that it is contained within the request's cookie. 
+
+Finally, the Android app required a bit more reworking for multidrone support, especially to reflect the evolving nature of the project. Multiple drones should be flying with simple autonomy, but when they encouter something of interest they alert the user and await instruction. Some fragments of the app, such as the map, easily and correctly support multiple drones, yet others such as the image stream do not. Therefore the user should be able to select which drone to be interacting with for these more specific fragments. Upon login, another request is made to the API to obtain a list of registered drones. On its return, a default drone is selected by choosing the last from the list. This can be changed from any fragment by using the Floating Action Button CITE(FAB), which brings up a spinner allowing the user to swap between the different drones. This will change the endpoints for specific fragments such as the image stream, but will not affect the MQTT subscriptions. Every drone topic is subscribed to upon connection, to allow data collection for the non-specific fragments such as the map. 
+
+\subsection{Dashboard}
 
 \section{Evaluation}
+
 \subsection{Testing of situations}
 
 
@@ -182,8 +755,15 @@ Security is an important issue for any system, especially for those that are con
 
 
 \section{Conclusion}
+
+
+
 \section{Further Work}
-\section{User Guide}
+ Revolve around the dronehandlers, modes and behaviour changes
+ more control of the drone
+ expansion of the website
+
+\section{User Guide}\label{UserGuide}
 
 
 
@@ -193,55 +773,166 @@ Security is an important issue for any system, especially for those that are con
 
 
 
-\bibliographystyle{abbrv}
-\begin{thebibliography}{20}
-    \bibitem{UAVUseCase}
-    Account of UAV use in a natural disaster. Published 2th March, 2015. Accessed 21st January, 2016. \\
-    \url{https://www.microdrones.com/en/news/detail/uav-surveillance-in-earthquake-stricken-cangyuan/}
-    \bibitem{UAV}
-    S. Waharte, N. Trigoni, \textit{``Coordinated Search With Swarm of UAVs''}, InSensor, Mesh and Ad Hoc Communications and Networks Workshops, 2009. SECON Workshops' 09. 6th Annual IEEE Communications Society Conference on 2009 Jun 22 (pp. 1-3). IEEE.
-    \bibitem{Autonomous}
-    T. Tomic et al, \textit{``Towards a Fully Autonomous UAV''}, Robotics and Automation Magazine, IEEE 19.3 (2012): 46-56.
-    \bibitem{Neural}
-    H. Soltau, G. Saon, \textit{``Joint Training of Convolutional and Non-Convolutional Neural Networks''}, to Proc. ICASSP (2014).
-    \bibitem{DeepAI}
-    Y. Bengio, \textit{"Learning Deep Architectures for AI"}, Foundations and Trends in Machine Learning 2:1-127
-    \bibitem{DeepPi}
-    S. Hickson, \textit{"Classifying everything using your RPi Camera: Deep Learning with the Pi"} \\
-    \url{http://stevenhickson.blogspot.co.uk/2015/03/classifying-everything-using-your-rpi.html}
-    \bibitem{Cloud Robotics}
-    D. Lorencik, P.Sincak, \textit{``Cloud Robotics: Current trends and possible use as a service''}, Applied Machine Intelligence and Informatics (SAMI), 2013 IEEE 11th International Symposium on. IEEE, 2013.
-    \bibitem{Software Architecture}
-    A. Sharma, M. Kumar, S. Agarwal, \textit{``A Complete Survey on Software Architectural Styles and Patterns''}, Procedia Computer Science 70 (2015): 16-28.
-    \bibitem{Watson}
-    Upbin, Bruce (November 14, 2013). \textit{``IBM Opens Up Its Watson Cognitive Computer For Developers Everywhere''}. Forbes. Accessed 20th January, 2016. \\
-    \url{http://www.forbes.com/sites/bruceupbin/2013/11/14/ibm-opens-up-watson-as-a-web-service/}
-    \bibitem{EdgeOfSpace}
-    J. Reynolds et al, \textit{``Edge Of Space Project Report''}, Imperial College London, 28th June 2015.
-    \bibitem{Sentiment}
-    N. Shankar Das, M. Usmani, S. Jain, \textit{``Implementation and Performance Evaluation of Sentiment Analysis Web Application in Cloud Computing''}, Computing, Communication and Automation (ICCCA), 2015 International Conference on. IEEE, 2015.
-    \bibitem{Microservices}
-    D. Namiot, M. Sneps-Sneppe, \textit{``On Micro-services Architecture''}, International Journal of Open Information Technologies ISSN: 2307-8162 vol. 2, no. 9, 2014
-    \bibitem{UAVDevelopment}
-    Y. Naidoo, R. Stopforth, G. Bright, \textit{``Development of an UAV for Search and Rescue Applications''}, AFRICON, 2011. IEEE, 2011.
-    \bibitem{Mavlink}
-    Tutorial for connecting autopilot device to a microcontroller, \\
-    \url{http://dev.ardupilot.com/wiki/raspberry-pi-via-mavlink/}
-    \bibitem{Bluemix}
-    A. Siagain, L. Kumar, L. Huang, M. Nguyen, \textit{``IBM Bluemix: Usability Evaluation''}
-    \bibitem{FreeSQL}
-    FreeSQLDatabase, a website offering an online SQL database service. \\
-    \url{http://www.freesqldatabase.com/}
-    \bibitem{Science}
-    `Science behind the service', detailing IBM's research into speech recognition. Accessed 21st January, 2016. \\
-    \url{https://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/speech-to-text/science.shtml}
-    \bibitem{IBMMessaging}
-    IBM Start For Android App. Accessed 21st January, 2016. \\
-    \url{https://github.com/ibm-messaging/iot-starter-for-android}
+\section{Appendix}
 
-\end{thebibliography}
+\subsection{REST API} \label{apdxRestApi}
+\subsubsection{Sensors}
+\begin{center}
+	\begin{lstlisting}
+		GET /api/:dronename/sensors
+		GET /api/:dronename/sensors/:timeFrom
+		GET /api/:dronename/sensors/:timeFrom/:timeUntil
+		GET /api/:dronename/sensors/:timeFrom/:timeUntil/:type
+	\end{lstlisting}
+\end{center}
+The sensors api endpoints are designed for the querying of historical data. They take a range of path parameters and return a JSON array of the relevant documents contained in the database. The primary use within this project is for the Android app to query and plot legacy data. The app has developed to now only use the longest sensor endpoint, but the rest are kept for completeness. This will, as is self-evident, return documents relating to a specific drone between a time window and of a certain type. Whilst URI query parameters rather than path parameters could have been used, this was avoided to ensure a more standard and simplistic API where as much as possible is defined in the path. A typical query would be `GET /api/pixhack/sensors/1465231987452/1465231997452/temperature`.
+
+\subsubsection{GPS}
+\begin{center}
+	\begin{lstlisting}
+		GET /api/:dronename/gps
+		GET /api/:dronename/gps/:timeFrom
+		GET /api/:dronename/gps/:timeFrom/:timeUntil
+	\end{lstlisting}
+\end{center}
+The gps endpoints are very similar to the sensors endpoints, but simply query the positionlog rather than the sensorlog database. The information should also be present in the sensorlog database, but this provides a lighter weight access point for position data, for instance for plotting historical routes. A typical query would be `GET /api/pixhack/gps/1465231987452/1465231997452`.
 
 
+\subsubsection{Images}
+\begin{center}
+	\begin{lstlisting}
+		GET    /api/:dronename/images
+		GET    /api/:dronename/image/:docID
+		POST   /api/:dronename/image/:docID
+		DELETE /api/:dronename/image/:docID
+	\end{lstlisting}
+\end{center}
+The images endpoints are for file handling. Similar to the sensors endpoints, they can be used to obtain historical files, but also for file upload and deletion. These endpoints have two main uses within the project. Due to large files being unable to be transferred over MQTT, a HTTP method is required. Indeed, this is one of the reasons that the system has this REST API. The drone uses the POST method to upload captured image files, whilst the Android client uses the GET endpoint with the docID `latest` to retrieve the latest image. A typical query from the client would be `GET /api/pixhack/image/latest`, and from the drone would be `POST {'image':@1465231987452.jpeg} /api/pixhack/image/1465231987452`, as well as the body containing metadata such as the GPS location of the image. 
+
+\subsubsection{Audio}
+\begin{center}
+	\begin{lstlisting}
+		GET    /api/:dronename/audio
+		GET    /api/:dronename/audio/:docID
+		POST   /api/:dronename/audio/:docID
+		DELETE /api/:dronename/audio/:docID
+	\end{lstlisting}
+\end{center}
+The first set of audio endpoints are similar to the image endpoints, for file transfers from the drone and to a client. They work in a very similar way, although there is currently no component of the system that requires any audio file to be fetched from the database. 
+\begin{center}	
+	\begin{lstlisting}
+		WS /api/:dronename/audio/stream/listen
+		WS /api/:dronename/audio/stream/talk
+		WS /api/:dronename/audio/stream/upload
+		WS /api/:dronename/audio/stream/download
+	\end{lstlisting}
+\end{center}
+This set of endpoints are websockets. These supply two audio streams for each drone; one (upload/listen) collects audio from the drone and broadcasts it to the listeners, and the other (talk/download) does the opposite. Having 4 end points, rather than two or even one, allows easy isolation of the data which can therefore be sent as pure binary audio, and means the scripting on the drone can have two separate threads to listen or send, preventing any issues with resource blocking. These were implemented to satisfy the evolving requirements of the system. 
+
+
+\subsubsection{Users}
+\begin{center}
+	\begin{lstlisting}
+		GET    /api/users/:username
+		POST   /api/users/:username
+		DELETE /api/users/:username
+	\end{lstlisting}
+\end{center}
+The users endpoints are primarily for admin management of user accounts stored in the SQL database. Individual accounts can be created, queried, and deleted. User accounts are crucial to the api. Without a user account and subsequent cookie, a client cannot do any action on the api. These endpoints are more restrictive than the others. Only an ADMIN can POST a new user, and only an ADMIN or the user themself can GET or DELETE a username. 
+
+\subsubsection{Drones}
+\begin{center}
+	\begin{lstlisting}
+		GET    /api/drones
+		POST   /api/drones
+		DELETE /api/drones/:dronename
+	\end{lstlisting}
+\end{center}
+The drones endpoints are for management of registered drones in the SQL database. A user can request a list of their drones with a GET request, POST a new drone, or DELETE an existing drone. The creation and deletion of drones from the SQL database cascades to the Cloudant database, creating or deleting all relevant databases. The cookie values are used to identify the user for drone endpoints, and are incorporated into the SQL queries, restricting access for any client to their own registered devices. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\begin{table}[ht]
+\caption{Searhc and Rescue Scenarios}
+\hyphenchar\font=-1
+\centering
+\begin{tabularx}{\textwidth}{| >{\centering}m{1.5cm} | >{\centering}m{2cm} | X | X |}
+    \hline
+    Name & Description & Trigger & Action \\ \hline
+    Fire & \vspace{\baselineskip} A fire is present &
+    \begin{itemize}[topsep=0pt, leftmargin=0cm,itemindent=.5cm,labelwidth=\itemindent,labelsep=0cm,align=left]
+        \item Image Recognition returning a related label, such as “Wild\_Fire”
+        \item Temperature sensor recording an abnormal temperature, eg >40C
+    \end{itemize} &
+    \begin{itemize} [topsep=0pt, leftmargin=0cm,itemindent=.5cm,labelwidth=\itemindent,labelsep=0cm,align=left]
+        \item Send avoidance movement commands to the drone, such as to increase altitude
+        \item Raise flag, log occurrence and location of drone
+    \end{itemize} \\ \hline
+
+    Person & \vspace{\baselineskip} A person is present &
+    \begin{itemize} [topsep=0pt, leftmargin=0cm,itemindent=.5cm,labelwidth=\itemindent,labelsep=0cm,align=left]
+        \item Image Recognition returning a related label, such as `person', `adult', `child'
+        \item Speech to Text returning a viable result
+    \end{itemize} &
+    \begin{itemize} [topsep=0pt, leftmargin=0cm,itemindent=.5cm,labelwidth=\itemindent,labelsep=0cm,align=left]
+        \item Halt movement of drone to allow operator to act suitably
+        \item Raise flag, log occurrence and location of drone
+    \end{itemize} \\ \hline
+
+    Building & \vspace{\baselineskip} A building is detected &
+    \begin{itemize} [topsep=0pt, leftmargin=0cm,itemindent=.5cm,labelwidth=\itemindent,labelsep=0cm,align=left]
+        \item Image Recognition returning a related label, such as “Rural\_Building”
+    \end{itemize} &
+    \begin{itemize} [topsep=0pt, leftmargin=0cm,itemindent=.5cm,labelwidth=\itemindent,labelsep=0cm,align=left]
+        \item Log occurrence, attempt to log location of building
+    \end{itemize} \\ \hline
+
+    Explosion & \vspace{\baselineskip} An explosion has occurred &
+    \begin{itemize} [topsep=0pt, leftmargin=0cm,itemindent=.5cm,labelwidth=\itemindent,labelsep=0cm,align=left]
+        \item Image Recognition returning a related label, such as “Explosion”
+        \item A sudden large noise on the drone microphone
+    \end{itemize} &
+    \begin{itemize} [topsep=0pt, leftmargin=0cm,itemindent=.5cm,labelwidth=\itemindent,labelsep=0cm,align=left]
+        \item Halt movement until operator can act suitably ie move drone away, or the Fire scenario occurs
+        \item Raise flag, log occurrence
+    \end{itemize} \\ \hline
+
+    Smoke & \vspace{\baselineskip} Smoke is present &
+    \begin{itemize} [topsep=0pt, leftmargin=0cm,itemindent=.5cm,labelwidth=\itemindent,labelsep=0cm,align=left]
+        \item Image Recognition returning a related label, such as “Smoke”
+    \end{itemize} &
+    \begin{itemize} [topsep=0pt, leftmargin=0cm,itemindent=.5cm,labelwidth=\itemindent,labelsep=0cm,align=left]
+        \item No avoidance needed, indeed smoke may be a useful marker to investigate
+        \item Raise flag, log occurrence
+    \end{itemize} \\ \hline
+
+    Person in Distress & \vspace{\baselineskip} A person is in need of assistance &
+    \begin{itemize} [topsep=0pt, leftmargin=0cm,itemindent=.5cm,labelwidth=\itemindent,labelsep=0cm,align=left]
+        \item Speech Recognition transcript containing key words, such as ``help'' or ``danger''
+        \item Tone Analysis returns analysis indicating stress, anger or a request
+    \end{itemize} &
+    \begin{itemize} [topsep=0pt, leftmargin=0cm,itemindent=.5cm,labelwidth=\itemindent,labelsep=0cm,align=left]
+        \item Further to action of scenario ``Person'', the request should be forwarded to a relevant display device
+        \item Raise flag, log occurrence
+    \end{itemize} \\ \hline
+
+
+\end{tabularx}
+\end{table}
+
+\printbibliography[title={Whole Bibliography}]
 
 
 \end{document}
