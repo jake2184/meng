@@ -16,7 +16,7 @@
 \usepackage{subcaption}
 \usepackage{setspace}
 \graphicspath{ {images/} }
-
+\usepackage{float}
 
 % Bibliography
 \usepackage[
@@ -125,7 +125,7 @@ backend=biber
                                 \raggedright
                                 Imperial College London\\[17pt]
                                 Department of Electrical and Electronic Engineering\\[17pt]
-                                Final Year Project Report 2014\\[17pt]
+                                Final Year Project Report 2016\\[17pt]
  
                 }
 
@@ -167,11 +167,11 @@ This project uses cloud services to aid in the interpretation of data collected 
 
 
 \section{Introduction}
-The use of unmanned aerial vehicles (UAV) in search and rescue situations has been increasing in recent years, with successful use cases\cite{UAVUseCase}. They can provide a unique viewpoint, greatly assisting the evaluation of search and rescue situations and location of a person(s). In search and rescue environments, time is of the essence and any aid can help save lives. However, the flight control of each vehicle requires a trained pilot, and the large amount of data collected must be inspected by hand. A dual-pronged solution to these problems is aided or autonomous drone flight and machine learning analysis of the data.
+The use of unmanned aerial vehicles (UAV) in search and rescue situations has been increasing in recent years, with successful use cases\cite{UAVUseCase}. They can provide a unique viewpoint, greatly assisting the evaluation of search and rescue situations and location of a person(s). In such environments, time is of the essence and any aid can help save lives. However, the flight control of each vehicle requires a trained pilot, and the large amount of data collected must be inspected by hand. A dual-pronged solution to these problems is aided or autonomous drone flight and machine learning analysis of the data.
 
 The machine learning and artificial intelligence (AI) can be present on the vehicle, off the vehicle and nearby, or off the vehicle and remote. Each offers unique advantages and drawbacks, with this project focusing on the AI being located off the vehicle and remote. Cloud AI provides greater processing power than the alternatives, but could result in a slower system which requires internet connectivity. 
 
-This project was intended as a proof-of-concept, demonstrating the potential for using cloud services and AI to assist in the interpretation of data from and the control of unmanned aerial vehicles. Therefore, this project revolves around an initial implementation of a system capable of doing this, with thought given to scalability, suitability, and validity of the concept with regard to future use. Figure \ref{fig:System} shows a simple overview of the implemented system, describing components, communication protocols, and communication content. It has 3 major sections, `Drone`, `Server`, and `Android`. Data flow is mostly left to right, although the majority of links are duplex. 
+This project was intended as a proof-of-concept, demonstrating the potential for using cloud services and AI to assist in the interpretation of data from and the control of unmanned aerial vehicles. Therefore, this project revolves around an initial implementation of a system capable of doing this, with thought given to scalability, suitability, and validity of the concept with regard to future use. Figure \ref{fig:System} shows a simple overview of the implemented system, describing components, communication protocols, and communication content. It has 3 major sections, `Drone`, `Server`, and `Android`. Data flow is mostly left-to-right, although the majority of links are duplex. 
 
 The `Drone` section is comprised of a Raspberry Pi and Drone Autopilot, which act as data collectors and actuators for the system. Together they collect a variety of system inputs, including simple data such as GPS coordinates and sensor readings, as well as more complex image and audio files. This data is passed, via the MQ Telemetry Transport (MQTT) and HyperText Transfer Protocol (HTTP) protocols, to the Server. 
 
@@ -309,7 +309,7 @@ This is a time dependent system, as collected data has a useful `lifespan`. Ther
 As well as time synchronisation, consideration was given to standards conformance, both externally and internally defined. For example, across the languages used of Python, NodeJS, JavaScript, and Android, where possible the use of Java-style `camelCasing` is used uniformly. JavaScript Object Notation (JSON) is used across all languages as a way of representing and transmitting textual or numerical data.
 
 \section{Implementation}
-This section explains in details each of the 3 primary deliverables. Although a large amount of change occurred throughout development, it is only the final solution which is presented here, to ensure a clear overview. As this project is a \textit{design and make} project, as well as being an evolving proof-of-concept, this section can be regarded as one of the most important of the report. Many of the decisions regarding the final implementation are described and justified within, as well as discussions on earlier designs and their flaws. 
+This section explains in detail each of the 3 primary deliverables. Although a large amount of change occurred throughout development, it is only the final solution which is presented here, to ensure a clear overview. As this project is a \textit{design-and-make} project, as well as being an evolving proof-of-concept, this section can be regarded as one of the most important of the report. Many of the decisions regarding the final implementation are described and justified within, as well as discussions on earlier designs and their flaws. 
 
 To give a sense of the complexity and interaction between the components, Figure \ref{fig:CommSingleUpload} shows the communication and data flow for the upload of a single image. This process will occur every couple of seconds for each connected drone, with the entire processing lasting roughly 10 seconds, depending on communication bandwidth. The file, with corresponding GPS data, is uploaded to the server, and subsequently the database and image recognition services. An alert is sent to the website via a websocket, and to the Android app via MQTT, to trigger these components to load the latest image. The image recognition returns a set of labels, which are again sent to the website and Android app via different channels. The labels are analysed, and a subsequent command is sent back to the drone via MQTT.
 
@@ -323,9 +323,9 @@ To give a sense of the complexity and interaction between the components, Figure
 Everything described in the Implementation Section has been implemented and is part of the working solution. 
  
 \subsection{Pi and Drone}
-The `drone` deliverable consists of two major components, a Pixhack autopilot and a Pi microcomputer. The autopilot is responsible for the usual actions of a drone, including: receiving remote control signal, and converting them into calibrated motor outputs; using internal sensors, such as attitude, altitude, and GPS position; autonomous flight following a series of pre-defined waypoints, using the sensor readings. It operates using firmware written in C, and is not capable of advanced computation or communication. The Pi is a microcomputer running a Linux distribution. The Pixhack was chosen due to its use of the MAVLink protocol described below, whilst the Pi was chosen due to it being highly versatile and customisable, and supporting higher-level languages such as Python. 
+The `drone` deliverable consists of two major components, a Pixhack autopilot and a Pi microcomputer. The autopilot is responsible for the usual actions of a drone, including: receiving remote control signals then converting them into calibrated motor outputs; using internal sensors, such as attitude, altitude, and GPS position; autonomous flight following a series of pre-defined waypoints using the sensor readings. It operates using firmware written in C, and is not capable of advanced computation or communication. The Pi is a microcomputer running a Linux distribution. The Pixhack was chosen due to its use of the MAVLink protocol described below, whilst the Pi was chosen due to it being highly versatile and customisable, and supporting higher-level languages such as Python. 
 
-In this system, the drone frame carries both the autopilot to control flight, and the Pi to allow the more advanced functionality. The Pi and Pixhack are connected via a serial port, and communicate using the MAVLink protocol. The Pi is responsible to collecting all desired data for the system, including images and audio from Pi peripherals, and altitude and GPS information from the drone. The Pi constantly transmits this data to the server, and will act upon any commands it receives from the server.
+In this system, the drone frame carries both the autopilot to control flight, and the Pi to allow the more advanced functionality. The Pi and Pixhack are connected via a serial port, and communicate using the MAVLink protocol. The Pi is responsible for collecting all desired data for the system, including images and audio from Pi peripherals, and altitude and GPS information from the drone. The Pi constantly transmits this data to the server, and will act upon any commands it receives from the server.
 
 Figure \ref{fig:DroneDiagram} shows a simplified diagram of the Drone deliverable hardware. Circles are the component inputs and outputs, while diamonds are communication devices. RC is the Remote Control receiver, and ESC is the Electronic Speed Control, which converts the signal from the autopilot into a 3 phase signal for a motor. The firmware on the Pixhack is open-source and unchanged, whilst the software development for the Pi is described below.
 
@@ -340,13 +340,13 @@ An image of the assembled drone frame, without the Pi attached, can be seen in F
 \subsubsection{Physical Assembly}
 The Raspberry Pi was bought through Imperial College EEE Stores, including peripherals such as a WiFi module, PiCam and microphone, and Grove Pi shield. The drone itself arrived mostly in a bulk delivery, the order having been placed by IBM. 
 
-Following a long delay in the arrival of the drone components, it was assembled in March. The assembly itself presented no major problems, with the majority of components being modular plug-and-play units. Throughout assembly and further development, equipment was bought or replaced with some regularity. Some was planned, such as the RC devices, whilst replacements were unexpected delays. The battery of the drone arrived later than all other components, and then later had to be replaced. The battery needed a specific Lithium Polymer (LiPo) charger, and required additional connectors to attach to the drone power board, and a remote control transmitter and receiver were sourced. Although `Grove Pi` sensors were provided in the initial bulk delivery, the Pi shield required to use them was not. Whilst this list is not comprehensive, it gives a sense of the many requirements of a hardware system. The delays for these components, other than those mentioned in section \ref{MajorDelays}, were individually minimal in their effect upon the project, but were frequent and so added up overall to a considerable delay. 
+Following a long delay in the arrival of the drone components, it was assembled in March. The assembly itself presented no major problems, with the majority of components being modular plug-and-play units. Throughout assembly and further development, equipment was bought or replaced with some regularity. Some was planned, such as the RC devices, whilst component replacements caused unexpected delays. The battery of the drone arrived later than all other components, and then later had to be replaced. The battery needed a specific Lithium Polymer (LiPo) charger, and required additional connectors to attach to the drone power board, and a remote control transmitter and receiver were sourced. Although `Grove Pi` sensors were provided in the initial bulk delivery, the Pi shield required to use them was not. Whilst this list is not comprehensive, it gives a sense of the many hardware requirements of the system. The delays for these components, other than those mentioned in section \ref{MajorDelays}, were individually minimal in their effect upon the project, but were frequent and so added up overall to a considerable delay. 
 
 \subsubsection{MAVLink}
-MAVLink is a lightweight communication protocol, which packs small C-structs over serial data channels\cite{qGroundMavlink}. It is a non-commercial open-source project, which is used as the primary method of communication in many modern unmanned aerial vehicles. The Pixhack autopilot uses this protocol to communicate with both ground stations and the Raspberry Pi. Both status and sensor data is transmitted, as well as the ability to send commands and instructions to the vehicle. Wrappers around the MavLink protocol are provided in Python by pymavlink, a library in the MAVLink git repository.
+MAVLink is a lightweight communication protocol, which packs small C-structs over serial data channels\cite{qGroundMavlink}. It is a non-commercial open-source project, which is used as the primary method of communication in many modern unmanned aerial vehicles. The Pixhack autopilot uses this protocol to communicate with both ground stations and the Raspberry Pi. Both status and sensor data is transmitted, as well as the ability to send commands and instructions to the vehicle. Wrappers around the MAVLink protocol are provided in Python by pymavlink, a library in the MAVLink git repository.
 
 \paragraph{Ground Stations}
-`Ground Stations` are software applications that interact with aerial vehicles for preflight calibration and flight control. Given the recency and open-source nature of the MavLink, there are many ground control stations, yet they are all likewise non-commercial ventures. Regrettably, this can mean they are often unreliable, especially when things go wrong. As described in \ref{MajorDelays} the first Pixhack board used was faulty. The ground stations would usually give vague and unhelpful feedback upon the failure of an operation, meaning identifying problems was difficult. The primary ground station used in this project was QGroundControl\cite{qGroundControl}, as not only was it the recommended application for Pixhacks, but it also provided a useful MavLink package inspector. 
+`Ground Stations` are software applications that interact with aerial vehicles for preflight calibration and flight control. Given the recency and open-source nature of the MAVLink, there are many ground control stations, but they are all non-commercial ventures. Regrettably, this can mean they are often unreliable, especially when things go wrong. As described in \ref{MajorDelays} the first Pixhack board used was faulty. The ground stations would usually give vague and unhelpful feedback upon the failure of an operation, meaning identifying problems was difficult. The primary ground station used in this project was QGroundControl\cite{qGroundControl}, as not only was it the recommended application for Pixhacks, but it also provided a useful MAVLink package inspector. 
 
 \subsubsection{Pi Development}\label{PiDevelopment}
 The software on the Pi is written in Python, due to the rapid speed of scripting and the large amount of support available. The tasks that the drone has to undertake involve large amounts of blocking and low CPU usage, such as a file upload, or sensor reading. Therefore, the use of threading is extensive. The threads are summarised below, with each starting at program boot and entering an endless loop. 
@@ -355,25 +355,25 @@ The software on the Pi is written in Python, due to the rapid speed of scripting
 	\item \texttt{sensorThread} reads Pi attached sensors, such as temperature and air purity, editing the \texttt{sensors} object.
 	\item \texttt{droneThread} communicates with the drone autopilot. This is a rather heavy thread. After establishing a connection with the drone, this threads repeatedly attempts to receive a message from the drone, and then checks to see if any commands are on the \texttt{MavCommandQueue}. Incoming messages are passed through a switch statement, and may update the \texttt{sensors} or \texttt{gps} objects. Commands are looked up in a dictionary from the provided string, and the corresponding function is carried out with the provided arguments. 
 	\item \texttt{imageThread} regularly captures images using the PiCam, using settings from the \texttt{status} object.
-	\item \texttt{audioThread} captures audio from the microphone in one of two methods. Either audio is recorded for a fixed duration, or it can be captured based on volume detection, before being saved as an audio file. These files may be converted to mp3, or saved as uncompressed WAV.
+	\item \texttt{audioThread} captures audio from the microphone in one of two methods. Either audio is recorded for a fixed duration, or it can be captured based on volume detection, before being saved as an audio file. These files may be converted to mp3 or saved as uncompressed WAV.
 	\item \texttt{streamingThread}, if the correct setting is enabled, will capture audio and directly stream it to the server.
-	\item \texttt{imageUploadThread} continually finds the latest file in the image folder, and uploads this to the server. A check is made to ensure the image has not already been sent.
+	\item \texttt{imageUploadThread} continually finds the latest file in the image folder and uploads this to the server. A check is made to ensure the image has not already been sent.
 	\item \texttt{audioUploadThread} does the same as the \texttt{imageUploadThread}, but for audio files.
 	\item \texttt{mqttThread} connects to the MQTT broker. It regularly sends the \texttt{sensors} and \texttt{status} objects, and will handle any commands sent from the server, adding them to the \texttt{PiCommandQueue} or \texttt{MavCommandQueue}
 \end{itemize}
 
 Due to the many threads operating on the same objects, thread-safe programming must be used. The message queues are instantiated as a thread-safe FIFO queue, and threading locks are used for access to the \texttt{sensors}, \texttt{gps} and \texttt{status} objects. These are mutually exclusive access locks, meaning only one thread at a time can be in possession of a lock, and therefore edit the object.
 
-The majority of development of the python on the Pi progressed as planned, without any major problems or architectural changes encountered. It was clear from early on that threads should be used due to the many blocking tasks, and although issues were encountered with adding security to satisfy the server requirements, and with ensuring objects were thread safe, these were not unexpected or exceptional. However, there were significant issues with the droneThread, as described in \ref{MajorDelays}.
+The majority of the Python development on the Pi progressed as planned, without any major problems or architectural changes encountered. It was clear early on that threads should be used due to the many blocking tasks, and although issues were encountered with adding security to satisfy the server requirements, and with ensuring objects were thread safe, these were not unexpected or exceptional. However, there were significant issues with the droneThread, as described in \ref{MajorDelays}.
 
 \subsubsection{Major Delays} \label{MajorDelays}
 For a period of around 6 weeks, there were serious difficulties in getting the autopilot to behave as expected. A large amount of time was spent during this period trying to debug and understand the issue, but eventually it turned out to be faulty hardware. 
 
-The issue was that although the autopilot would communicate as expected with MAVLink, there were notable omissions from the packets received, such as RC value, and output servo values. The drone would not `arm`, the state needed to begin flying. Due to inexperience with the protocol and aerial vehicles, and a complete lack of any form of error message, it was assumed that is was a configuration or software error. Large amounts of time was spent trawling through online web forums and literature, as well as requesting help on such forums and from the Imperial College Robotics Society. Note that due to the non-commercial nature of MAVLink and related components, there is no official support other than the company the drone was purchased from. 
+The issue was that although the autopilot would communicate as expected with MAVLink, there were notable omissions from the packets received, such as RC value and output servo values. The drone would not `arm`, the state needed to begin flying. Due to inexperience with the protocol and aerial vehicles, and a complete lack of any form of error message, it was assumed that is was a configuration or software error. Large amounts of time was spent trawling through online web forums and literature, as well as requesting help on such forums and from the Imperial College Robotics Society. Note that due to the non-commercial nature of MAVLink and related components, there is no official support other than the company the drone was purchased from. 
 
-Many different approaches and solutions were attempted, and certain issues were fixed; a junction on the provided Pulse-Position-Modulation (PPM) encoder requires soldering to provide power to the RC, an issue which was only known about due to contacting technical support from unmannedTech\cite{ppmSolder}. The lack of provided documentation meant there were a number of similar issues throughout the project. However, none of these fixed the primary problems. Eventually it was found that the SD card of the autopilot, once it had been reformatted due to it being corrupted, showed an error message `PX4IO board not found`. This lead to unsuccessful attempts to fix the firmware on the autopilot, which forums indicated was the root of the issue. However, this, combined with the inability to power the Pixhack directly (only indirectly via the Electronic Speed Control module), lead the technical support at unmannedTech to suspect a hardware fault, and to return the board\cite{px4ioNotFound}. 
+Many different approaches and solutions were attempted, and certain issues were fixed; a junction on the provided Pulse-Position-Modulation (PPM) encoder required soldering to provide power to the RC, an issue which was only known about due to contacting technical support from unmannedTech\cite{ppmSolder}. The lack of provided documentation meant there were a number of similar issues throughout the project. However, none of these fixed the primary problems. Eventually it was found that the SD card of the autopilot, once it had been reformatted due to it being corrupted, showed an error message `PX4IO board not found`. This lead to unsuccessful attempts to fix the firmware on the autopilot, which forums indicated was the root of the issue. However, this, combined with the inability to power the Pixhack directly (only indirectly via the Electronic Speed Control module), lead the technical support at unmannedTech to suspect a hardware fault, and to return the board\cite{px4ioNotFound}. 
 
-The board was indeed faulty, and after receiving a replacement the board behaved as expected, and is able to arm correctly. However, due to this extensive delay, development regarding the control of the drone was severely restricted. Autonomous control was not fully tested.
+The board was indeed faulty, and after receiving a replacement the board behaved as expected, and was able to arm correctly. However, due to this extensive delay, development regarding the control of the drone was severely restricted. Autonomous control was not fully tested.
 
 One advantage of this issue was that due to line-by-line debugging of the large pymavlink library, a solid understanding of how it is implemented was gained. It also allowed time for greater development of the central server component of the system.
 
@@ -383,9 +383,9 @@ Another substantial delay was trying to install \texttt{ffmpeg} on the Raspberry
 Initially, audio was only captured by volume activation, and saved as an uncompressed WAV file. This is due to the requirement of the Speech to Text service requiring input files of a specific format. However, uncompressed WAV files are very large, and therefore take a considerable time to upload. This means any analysis returned from the service is likely to be too old to be useful. Therefore, data compression was implemented. mp3 is a standard, high-compression audio format. The tool \texttt{ffmpeg} was used for this conversion, due to a lack of a suitable Python library to execute the conversion. After the data is captured, it is passed to the \texttt{ffmpeg} tool as a command-line process, which saves it in an mp3 file format. Once this file is uploaded to the server, a Node Package Manager (npm, see \ref{npm}) module\cite{npmlame} providing access to \texttt{lame} was used to decompress the mp3 into a WAV file, which can be sent to the Speech To Text service for analysis. 
 
 \subsubsection{Streaming}\label{Streaming}
-Once the drone rotors were attached and the drone could run, it became clear that noise activation would not work as a method to start and stop audio capture. The volume of the drone rotors was far louder than expected, and would drown out any voice. The alternative is to have constant recording, with a set time interval to create discrete files. However, not only does this raise the issue of sentences being split over files, but the Speech To Text service cannot cope well with high levels of noise, as shown in \ref{testSpeechRec}. 
+Once the drone rotors were attached and the drone could run, it became clear that noise activation would not work as a method to start and stop audio capture. The volume of the drone rotors was far louder than expected, and would drown out any voice. The alternative was to have constant recording, with a set time interval to create discrete files. However, not only does this raise the issue of sentences being split over files, but the Speech To Text service cannot cope well with high levels of noise, as shown in \ref{testSpeechRec}. 
 
-The human ear, however, is well known to be very adapt at the cocktail party effect\cite{cocktailParty}. A human may be able to make use of audio that the intelligent services cannot. Therefore, the functionality of audio streaming was added to all components of the system. If the appropriate option is enabled on the Pi, file capture stops, a connection is made to a websocket on the server, and all audio data is directly uploaded as binary data. The server receives this data on one `upload` websocket, and broadcasts it to any listeners on the corresponding `listen` websocket. The Android app and Dashboard can choose to stream audio, in which case they connect to the `listen` websocket, and play any data received.
+The human ear, however, is well known to be very adept at the cocktail party effect\cite{cocktailParty}. A human may be able to make use of audio that the intelligent services cannot. Therefore, the functionality of audio streaming was added to all components of the system. If the appropriate option is enabled on the Pi, file capture stops, a connection is made to a websocket on the server, and all audio data is directly uploaded as binary data. The server receives this data on one `upload` websocket, and broadcasts it to any listeners on the corresponding `listen` websocket. The Android app and Dashboard can choose to stream audio, in which case they connect to the `listen` websocket, and play any data received.
 
 \subsection{Node JS Server}
 The system requirements specified that a central server must exist, both to coordinate communication between all remote components and to analyse and act upon this communication. This will require many asynchronous actions occurring at the same time, which will have different requirements. Connections to IBM services may have a very high latency due to the time required to implement the analysis, yet require little server processing. Assessing and acting upon the results from IBM services will require server processing, yet little external communication. IBM Bluemix provides a server container, but the server implementation must be written in a language of the developer's choice. 
@@ -397,7 +397,7 @@ NodeJS has only a single primary thread of execution. To enable handling of mult
 \begin{lstlisting}
 databaseObject.someFunction(arg1, arg2, function(error, result){
 	if(error){
-		// Handle Error. Usually requires a return, or else handle result
+		// Handle Error. Usually requires a return to prevent handling undefined result
 	}
 	// Handle Result
 });
@@ -406,7 +406,7 @@ databaseObject.someFunction(arg1, arg2, function(error, result){
 
 In the body of \texttt{someFunction} there will be an action that can be conducted in the background, such as a file interaction or networking, which results in the objects \texttt{error} and \texttt{result}. Once this has been completed, the callback function is called with the objects as arguments. The background action can be handled without interaction from the primary thread, until more work such as executing the callback is required. Although somewhat different to conventional programming and tricky to understand initially, this method of handling asynchronous actions results in a powerful tool that is capable of doing many actions simultaneously. 
 
-All of the IBM services used, each of which are described in more details below, are interacted with via NodeJS modules as stated above. At server boot, a credentials JSON object, VCAP\_SERVICES, is read. In Bluemix, these are set as environment variables, where as locally the credentials are read directly from a file. The credentials are then used to instantiate the object, and for some a connection is made immediately.
+All of the IBM services used, each of which are described in more details below, are interacted with via NodeJS modules as stated above. At server boot, a credentials JSON object, VCAP\_SERVICES, is read. In Bluemix, these are set as environment variables, whereas locally the credentials are read directly from a file. The credentials are then used to instantiate the object, and for some a connection is made immediately.
 
 Figure \ref{fig:ServerDiagram} shows a class diagram of the NodeJS codebase, giving brief descriptions of each module's function; each module is defined in its own file, and included by using the NodeJS directive `require`. This highlights the modular nature of development.  
 
@@ -424,21 +424,21 @@ One of the very useful features of NodeJS is its package manager, npm. As well a
 \subsubsection{MQTT Service}
 At boot, the server registers itself as an Application on the MQTT broker, subscribing to all device events, and therefore picking up any messages from the drones. This service is used in the server to collect drone messages, send drone commands, and also send messages to other connected clients such as the Android app and Dashboard.
 
-Later in this project, when MQTT was not available or for less suitable data content such as audio streaming, websockets are used in a very similar manner. However, MQTT provides functionality that a simple websocket cannot. MQTT is designed for lightweight communication where network bandwidth is at a premium or intermittent\cite{mqttSpec}. The overhead cost is therefore minimised, and connection from a client to a broker has mechanisms of determining disconnection or temporary loss of contact. As a publisher/subscriber model, MQTT can be connectionless. The server does not need to be online for the drone to emit MQTT packets, and a single emit from the drone can be broadcast to many connected clients. There are three qualities of service (QoS), `at most once`, `at least once`, `exactly once`\cite{mqttSpec}. Given the repetitive nature of drone messages, these are suited to the `at most once` QoS. Message loss can happen, and if so is ignored. This removes any need for duplicate handling. However, for more important messages where guaranteed delivery is desired with no duplicates, the `exactly once` QoS service can be used. In this system, commands send to the Drone component use this delivery method.
+Later in this project, when MQTT was not available or for less suitable data content such as audio streaming, websockets were used in a very similar manner. However, MQTT provides functionality that a simple websocket cannot. MQTT is designed for lightweight communication where network bandwidth is at a premium or intermittent\cite{mqttSpec}. The overhead cost is therefore minimised, and connection from a client to a broker has mechanisms of determining disconnection or temporary loss of contact. As a publisher/subscriber model, MQTT can be connectionless. The server does not need to be online for the drone to emit MQTT packets, and a single emission from the drone can be broadcast to many connected clients. There are three qualities of service (QoS), `at most once`, `at least once`, `exactly once`\cite{mqttSpec}. Given the repetitive nature of drone messages, these are suited to the `at most once` QoS. Message loss can happen, and if so is ignored. This removes any need for duplicate handling. However, for more important messages where guaranteed delivery is desired with no duplicates, the `exactly once` QoS service can be used. In this system, commands sent to the Drone component use this delivery method.
 
 \subsubsection{Analytical Services}\label{AnalyticalServices}
-Two main analytical services are used. Although others were explored, either the input data or response was not detailed enough for use. For instance, the very clear phrase `I need help. I am hurt.` generated no meaningful response from the Tone Analysis service. Tone Analysis, it was discovered, is designed for much longer blocks of text, which this system will not be able to generate.
+Two main analytical services are used. Although others were explored, either the input data or the response was not detailed enough for use. For instance, the very clear phrase `I need help. I am hurt.` generated no meaningful response from the Tone Analysis service. Tone Analysis, it was discovered, is designed for much longer blocks of text, which this system will not be able to generate.
 \begin{itemize}
 	\item Visual Recognition - used to generate keyword labels from an input image, which originates from the drone. Although the exact details of the service are proprietary knowledge, it is based upon a pre-trained neural network. There is a large set of labels that the service can identify, around 700 unique ones. The service returns any label which has an output score of above 0.5 (out of 1.0). 
 	\item Speech To Text - used to generate a transcript from an input audio file, which originates from the drone. The returned transcript also has a confidence score from 0.0 to 1.0. 
 \end{itemize}
 
 \subsubsection{Data Storage}
-Two methods of data storage are used, a no-SQL database service called Cloudant, and a standard SQL database. Both are managed through a website 'dashboard', and are accessed through a NodeJS module wrapper around a REST API. Both are used as each is better suited for the task for which they are used.
+Two methods of data storage are used, a no-SQL database service called Cloudant, and a standard SQL database. Both are managed through a website 'dashboard', and are accessed through a NodeJS module wrapper around a REST API. Both are used as each is better suited to the task for which they are employed.
 \paragraph{Cloudant}
 no-SQL databases can be viewed a bit like a 'bin'; any JSON object can be dumped into it, regardless of properties or adherence to a pre-specified specification. This is perfectly suited to sensor data recording, as it means if a new sensor type is added the database requires no alteration, similarly if a sensor reading is omitted. Each record in the database is called a document. It is also possible to attach files, such as JPEGs or WAV files, to a document as an attachment. This is a much easier way of storing large volume data when compared to SQL BLOBs (Binary Large OBject). For these reasons, the IBM no-SQL implementation, Cloudant, was chosen as the persistent storage method for all data, other than the accounts described in the SQL section below. 
 
-The Cloudant database was very easy to set up and put data in. However, issues arose when it came to querying data. Due to the fact that the data has no specification, there is no guarantee or knowledge of the data content of the database documents, so it cannot be queried except for with its primary key, '\_id', which is the only enforcement of the database. If not provided \_id is randomly generated when the document is created, but in this project the use of a timestamp, in milliseconds since epoch, was used as a document \_id for all Cloudant databases. This allowed querying of the data using the id, before indexing was fully established. Indexing is the proper method of querying the database, and requires two steps. First, an index must be made. Next, queries can be run against this index in a similar manner to an SQL query. For instance, an index of the field 'type' is made on the sensorlog databases. This is currently done on database creation. A query can then be run, which uses a selector and the indexed fields to provide relevant results.
+The Cloudant database was very easy to set up and put data in. However, issues arose when it came to querying data. Due to the fact that the data has no specification there is no guarantee or knowledge of the data content of the database documents, so it cannot be queried except for with its primary key, '\_id', which is the only enforcement of the database. If not provided \_id is randomly generated when the document is created, but in this project the use of a timestamp, in milliseconds since epoch, was used as a document \_id for all Cloudant databases. This allowed querying of the data using the id, before indexing was fully established. Indexing is the proper method of querying the database, and requires two steps. First, an index must be made. Next, queries can be run against this index in a similar manner to an SQL query. For instance, an index of the field 'type' is made on the sensorlog databases. This is currently done on database creation. A query can then be run, which uses a selector and the indexed fields to provide relevant results.
 
 \paragraph{SQL} \label{SQL}
 The SQL database is provided as an IBM DB2 service, and is used for more static relational data which is text based and doesn't require large file storage. There are two primary tables, `users` and `drones`, the definitions of which can be found in the Appendix (\ref{SQLDefinitions}). Each table's function and column names are fairly self explanatory, with \texttt{users} storing a list of the user accounts, and \texttt{drones} storing registered drones. `salt` and `password` are explained in more detail in the security section, as is the nature of `role`. An SQL implementation is better suited to this nature of data, as it is more rigid and stringent, ensuring mistakes and errors are less likely to occur. Isolation of sensitive data is also a good security practice. Having a database reserved specifically for account and drone information means the system can focus on controlling access more easily, and any damage caused by a weakness elsewhere in the system is minimised. Due to previous experience with SQL, there were few issues with the creation or use of the SQL databases. 
@@ -533,7 +533,7 @@ Therefore, the NodeJS module `client-sessions` by Mozilla was used as a stable a
 \end{center}
 user represents the username registered in the SQL database, and is used both as the variable to ensure a client is logged in and to restrict access to other users' accounts. Role is an enumerated int that signifies the role of a client. For instance, a client with RoleEnum.ADMIN can access any API endpoint, whereas client with RoleEnum.GUEST can only access GET endpoints. drones is an array containing all the dronenames registered to the user in the SQL database, preventing or allowing access to any drone specific endpoint. The use of this cookie greatly reduces the risk of spoofing, tampering, information disclosure, and elevation of privilege. 
 
-In much the same way as a regular session id, if an attacker manages to capture a valid cookie then they could use this to impersonate another user. There are three main ways that this risk is mitigated. Firstly, the server can refuse any non-https connections, and the client-sessions module can be configured to only be sent over https. However, this does not stop an attacker at the end of HTTPS connection, nor does it prevent a user sending a valid cookie over HTTP. Secondly, the cookie has an expiry time, meaning an old cookie will not be valid. This is currently set to 24 hours, but could be reduced for greater security\cite{mozillaClientSessions}. The final approach is the availability of a `/logout` URI which forcibly resets the session. 
+In much the same way as a regular session id, if an attacker manages to capture a valid cookie then they could use this to impersonate another user. There are three main ways that this risk is mitigated. Firstly, the server can refuse any non-https connections, and the client-sessions module can be configured to only be sent over https. However, this does not stop an attacker at the end of HTTPS connection, nor does it prevent a user sending a valid cookie over HTTP. Secondly, the cookie has an expiry time, meaning an old cookie will not be valid. This is currently set to 24 hours, but could be reduced for greater security\cite{mozillaClientSessions}. The final approach is the availability of a `/logout` URI which forcibly resets the session. However, the logout needs improvement as most browsers automatically retain the basic authorisation credentials, meaning re-login happens without prompting the user for credentials. 
 
 
 \paragraph{User Accounts}
@@ -569,6 +569,8 @@ As previously stated, the \texttt{DroneHandler} contains a `modeFactors` object,
 These checks can be combined, such as requiring a mode change if two factors are above a lower, less-strict threshold. This is designed to be simple to understand, allowing a user to easily add in new conditions, that when satisfied a custom mode can be entered. If they wish to extend the DroneHandler, for instance they only want a specific drone to be able to enter a custom mode, this is again achievable and would only require a simple \texttt{if} in the \texttt{DroneCoordinator} to determine which handler should be instantiated for a certain drone.
 
 The data which controls the mode comes in from a variety of sources, including the audio API, the images API, and MQTT messages. Therefore it would be fairly intensive to call a function to check all recent data every time a new piece comes in, which could be multiple times a second. Given that a NodeJS instance is operated on a single thread, thought must be given towards synchronous actions which run regularly, as whilst running they block the server and reduce availability. Therefore, the function `determineMode` in \texttt{DroneHandler} is run at intervals of one second - a response time which is suitably short enough to respond effectively, yet not short enough to block the server. Whilst the function determineMode is running, the server can do no other actions due to the single thread of execution.
+
+To prevent mode thrashing, re-entering a mode that was exited recently is disallowed. This restriction must be disabled during testing, when rapid mode changes are desired to ensure functionality. 
 
 
 \subsection{Android}
@@ -726,10 +728,14 @@ Therefore, the service can be deemed somewhat noise susceptible. Although noise 
 
 
 \subsection{Latency and Bandwidth}\label{LatencyBandwidth}
-To test the quality and compression of the data provided by the drone, to determine an ideal level, a series of files were created with varying characteristics. For audio, both mp3 and wav files were made at four different sampling frequencies of a 5 second snippet of the words `this is a test recording to test the latency of the services`. For images, photos were taken with the PiCam at four different resolutions, each with four levels of compression. Scripts were written to sequentially upload the files to the server at specific endpoints. These endpoints go through the motions of uploading the files to the database and services, but discards any response instead logging the time taken for a process. A command is then sent to the Pi in a similar manner to that when the DroneHandler changes mode. The Pi logs this command, which contains information about the file upload which triggered it. Using a combination of these scripts and endpoints, an assessment of the latency of the system end-to-end can be determined, as well as the duration of different sections of the system. 
+To test the quality and compression of the data provided by the drone, to determine an ideal level, a series of files were created with varying characteristics. For audio, both mp3 and wav files were made at four different sampling frequencies of a 5 second snippet of the words `this is a test recording to test the latency of the services`. For images, photos were taken with the PiCam at four different resolutions, each with four levels of compression. 
+
+Scripts were written to sequentially upload the files to the server at specific endpoints. These endpoints go through the motions of uploading the files to the database and services, but discards any response instead logging the time taken for a process. A command is then sent to the Pi in a similar manner to that when the DroneHandler changes mode. The Pi logs this command, which contains information about the file upload which triggered it. Using a combination of these scripts and endpoints, an assessment of the latency of the system end-to-end can be determined, as well as the duration of different sections of the system. 
 
 \subsubsection{Audio}
-As described above, a total of eight files were used to test the audio latency, all sampled from the same original audio. The wav files are uncompressed signed 16bit PCM audio, whilst the mp3 are compressed versions of these using a variable bitrate of 170-210 kbps. The upload bandwidth was tested using a command-line speedtest tool, and was measured as 0.87Mbits per second. However, a more accurate estimate of the available bandwidth can be determined by dividing the uploaded file size by the time it took to upload to the server, to obtain the value of 0.62Mbits per second. The recorded bandwidth was lower for smaller files, likely due to setup costs and TCP windows, but this difference was ignored due to all values being averaged. The time for recognition was a large proportion of the system response time, but is unavoidable, and unchangeable. Each file was uploaded ten times, and an average presented below in Table \ref{tab:AudioUpload}.
+As described above, a total of eight files were used to test the audio latency, all sampled from the same original audio. The wav files are uncompressed signed 16bit PCM audio, whilst the mp3 are compressed versions of these using a variable bitrate of 170-210 kbps. The upload bandwidth was tested using a command-line speedtest tool, and was measured as 0.87Mbits per second. However, a more accurate estimate of the available bandwidth can be determined by dividing the uploaded file size by the time it took to upload to the server, to obtain the value of 0.62Mbits per second.
+
+The recorded bandwidth was lower for smaller files, likely due to setup costs and TCP windows, but this difference was ignored due to all values being averaged. The time for recognition was a large proportion of the system response time, but is unavoidable, and unchangeable. Each file was uploaded ten times, and an average presented below in Table \ref{tab:AudioUpload}.
 
 \begin{table}[h]  
 \caption{Audio Upload Latency Test\label{tab:AudioUpload}}
@@ -751,12 +757,14 @@ File Name & File Size (Bytes) & Time To Upload File To Server (ms) & Time for Re
 \end{tabularx}
 \end{table}
 
-This table highlights a few pivotal aspects of the audio side of the system. Unsurprisingly, the part of the system most affected by the varying files is the upload to the server, with larger files taking considerably longer. The time for recognition also has a positive correlation with file size, but less severe, and with a large underlying constant value. Although byte-for-byte the mp3 files should take slightly longer for recognition, due to the need to decompress the file on the server, this delay is dwarfed by the reduction in upload time from the reduced file size. The mp3 compression reduces the file size by about a factor of 5. Whilst this doesn't directly compare directly to the reduction in upload time, the factor is still significant. Also worth noting is the changes in the feedback from the services from the sample files. The file contained speech of the words `this is a test recording to test the latency of the services`, and almost all of the tests returned a correct transcript, but with the word `cast` replacing `test`. The exceptions, interestingly, were the two higher-quality mp3 files. The confidence levels were very close for all tests, but the larger mp3 files had a slightly higher confidence level, as well as a more accurate transcript. With the added bonus of reduced system latency, without a doubt mp3 files should be used in place of uncompressed wav files.
+This table highlights a few pivotal aspects of the audio side of the system. Unsurprisingly, the part of the system most affected by the varying files is the upload to the server, with larger files taking considerably longer. The time for recognition also has a positive correlation with file size, but less severe, and with a large underlying constant value. Although byte-for-byte the mp3 files should take slightly longer for recognition, due to the need to decompress the file on the server, this delay is dwarfed by the reduction in upload time from the reduced file size. The mp3 compression reduces the file size by about a factor of 5. Whilst this doesn't directly compare directly to the reduction in upload time, the factor is still significant.
+
+Also worth noting is the changes in the feedback from the services from the sample files. The file contained speech of the words `this is a test recording to test the latency of the services`, and almost all of the tests returned a correct transcript, but with the word `cast` replacing `test`. The exceptions, interestingly, were the two higher-quality mp3 files. The confidence levels were very close for all tests, but the larger mp3 files had a slightly higher confidence level, as well as a more accurate transcript. With the added bonus of reduced system latency, without a doubt mp3 files should be used in place of uncompressed wav files.
 
 \subsubsection{Images}
-The testing for images is split into two parts; the first is to investigate the impact that compression has on upload time, the second on its impact upon service response. There are two methods of 'compression', that of having a lower initial image resolution, and also of a higher level of jpeg compression. q\textless number\textgreater indicates the quality level, inverse to compression. 25 is highly compressed, 100 is nearer raw data. Note that the comparisons here are hardware specific; the quality of the image and compression available will be affected by the PiCam quality and firmware. Therefore sample images cannot be downloaded in bulk, as each image must be captured by the hardware in question. In addition, the level of compression is variable depending on the image content. However, the degree of compression for the test images, normalised, is given below. Given that the content of each image was the same, these values were very similar for varying resolutions. As can be seen, Quality Factor 75 actually offers very little compression. 
-\begin{table}[h]
-\caption{File Size Reduction from Compression}
+The testing for images is split into two parts; the first is to investigate the impact that compression has on upload time, the second on its impact upon service response. There are two methods of 'compression', that of having a lower initial image resolution, and also of a higher level of jpeg compression. q\textless number\textgreater indicates the quality level, inverse to compression. 25 is highly compressed, 100 is nearer raw data. Note that the comparisons here are hardware specific; the quality of the image and compression available will be affected by the PiCam quality and firmware. Therefore sample images cannot be downloaded in bulk, as each image must be captured by the hardware in question. In addition, the level of compression is variable depending on the image content. However, the degree of compression for the test images, normalised, is given below in Table \ref{compressionSize}. Given that the content of each image was the same, these values were very similar for varying resolutions. As can be seen, Quality Factor 75 actually offers very little compression. 
+\begin{table}[H]
+\caption{File Size Reduction from Compression\label{compressionSize}}
 \centering
 \begin{tabular}{| c | c |}
 \hline
@@ -846,7 +854,7 @@ In this, Sinon spies and stubs are used\cite{sinon}. These are mock objects that
 If all API endpoint tests pass, and all unit tests and scenario tests pass, it can be assumed that the server would react as specified in the tests in-situ. Given that the specified behaviour directly relates to the scenarios from the Interim Report (see Appendix, Table \ref{scenarios}), the system satisfies the requirement to have this behaviour. However, this is only assessing the central section of system, not an end-to-end test. Full tests are described in \ref{ImplementationTesting}.
 
 \subsubsection{Istanbul}
-Code coverage is a measurement of the level of source code that is executed when a test suite is run. It is a core metric when evaluating a system and the effectiveness of its tests, and was used as a tool in this project to ensure that as much of the codebase was tested as possible. The NodeJS module Istanbul was used to analyse code coverage, due to its ease of use, and well-formatted output\cite{istanbul}. This tool simply wraps around and runs Mocha, inspecting the code that is executed. A detailed HTML report is then generated, which shows exactly which lines of the codebase are executed, how many times, how many branches were taken, and so on. Istanbul was used as a technique to ensure that the testing was as comprehensive as possible. Figure CITE shows a snapshot of the output report from an Instanbul run. As can be seen, the test coverage is fairly high; the majority of the uncovered lines of code are for exception and error handling. Every time an external service is communicated with the error object returned must be checked, yet most of the time this object will be undefined so no action will be taken.
+Code coverage is a measurement of the level of source code that is executed when a test suite is run. It is a core metric when evaluating a system and the effectiveness of its tests, and was used as a tool in this project to ensure that as much of the codebase was tested as possible. The NodeJS module Istanbul was used to analyse code coverage, due to its ease of use, and well-formatted output\cite{istanbul}. This tool simply wraps around and runs Mocha, inspecting the code that is executed. A detailed HTML report is then generated, which shows exactly which lines of the codebase are executed, how many times, how many branches were taken, and so on. Istanbul was used as a technique to ensure that the testing was as comprehensive as possible. Figure \ref{fig:istanbulOutput}, in the Appendix, shows a snapshot of the output report from an Istanbul run. As can be seen, the test coverage is fairly high; the majority of the uncovered lines of code are for exception and error handling. Every time an external service is communicated with the error object returned must be checked, yet most of the time this object will be undefined so the \texttt{if} clause will not be executed. This leads to the low Branches coverage. The effect these have on the report could be minimised by instructing Istanbul to ignore each with a specific code comment above it, but this option was not taken to keep the codebase cleaner.  
 
 \subsection{Implementation Testing}\label{ImplementationTesting}
 One of the most crucial type of test are full deployment tests, running the system end to end. This means once the system is running, closely inspecting the inputs and outputs to see if they match expectations. This nature of test were run regularly and repeatedly throughout the project. When an individual component, such as the server or Android, was developed and tested to work with sample input, the only way to test it completely is to run the whole system. However, due to the fact this covered such a wide range of components, there is no easy framework to run automated or quantitative tests. Therefore these were run on an ad-hoc basis.
@@ -878,12 +886,17 @@ In the Interim Report, a range of Scenarios (see Appendix Table \ref{scenarios})
 In each test, the desired outcome is tested by using Sinon spies, with some or all of the checks below. The exact property or function tested varies (called, calledTwice, etc) depending on the exact scenario.
 \begin{lstlisting}
  getModeNameWithDelay(function (result){
-   assert.equal(result, "Interact", "Modes do not match"); // Ensure the drone is in the correct mode
-   assert(mqttHandler.sendCommand.calledTwice, "MQTT Command not sent"); // Ensure the system sends commands to the drone
-   assert(mqttHandler.sendEvent.called, "MQTT Event not sent"); // Ensure the system sends events to Android
-   assert(sendUpdates.calledWith(droneName, 'event'), "sendUpdates not called correctly"); // Ensure the system sends event to the dashboard
-   assert(cloudant.db.insert.called, "Database not used"); // Ensure the system logs the event to a database
-   done();               
+	// Ensure the drone is in the correct mode
+	assert.equal(result, "Interact", "Modes do not match"); 
+	// Ensure the system sends commands to the drone
+	assert(mqttHandler.sendCommand.calledTwice, "MQTT Command not sent"); 
+	// Ensure the system sends events to Android
+	assert(mqttHandler.sendEvent.called, "MQTT Event not sent"); 
+	// Ensure the system sends event to the dashboard
+	assert(sendUpdates.calledWith(droneName, 'event'), "sendUpdates not called correctly");
+	// Ensure the system logs the event to a database
+	assert(cloudant.db.insert.called, "Database not used"); 
+	done();               
 });
 \end{lstlisting}
 
@@ -1094,13 +1107,13 @@ Although the autopilot is capable of navigating through waypoints, it has no sur
 
 \section{Conclusion}
 
-The use of drones in a search and rescue environment is increasing due the unique viewpoint they offer. Their use would become invaluable if the processing of collected data could be automated, through the use of machine learning techniques. This leads to issues with processing power and sharing of information, with one possible solution that this project looks into being the use of cloud services to aid data analysis.
+The use of drones in search and rescue environments is increasing due to the unique viewpoint they offer. Their use would become invaluable if the processing of collected data could be automated through the use of machine learning techniques. Currently, this leads to issues with processing power and sharing of information, but one possible solution, analysed by this project, is the use of cloud services to aid data analysis.
 
-This project had three broad objectives: create a `drone` deliverable which would collect data and transmit it to the cloud, construct a server which would coordinate sending this data to analytical cloud services and handling the response, and implementing a method of forwarding this analysis and interpretation to a user. To meet these objectives, the described deliverables were implemented and tested. A Raspberry Pi linked to a UAV autopilot acted as the `drone` component, connected to a custom NodeJS server in the cloud, which forwarded analysis to an Android app.
+The project had three broad objectives: create a `drone` deliverable which would collect data and transmit it to the cloud, construct a server which would coordinate sending this data to analytical cloud services and handling the response, and implementing a method of forwarding this analysis and interpretation to a user. To meet these objectives, the described deliverables were implemented and tested. 
 
 The system was enhanced through support for multiple drones, and the construction of a website dashboard for an alternative feedback method. System critical characteristics such as latency were optimised, as well as less obvious aspects such as security. The architectural design and HTTP API of the system allow easy integration for any future development.
 
-The difficulties faced in this project mostly revolved around the steep learning curve and subsequent complexity of the system. This system was built with very little prior knowledge of the software techniques and hardware used. A number of skills and techniques were learnt, as well as a large knowledge base. As well as new information, skills that had been learnt previously were used to create an enhanced system, which complies with multiple industry standards, as well as being secure and well documented. The complexity was managed through modular additions and improvements, and constant testing of correct functioning.
+The difficulties faced in this project mostly revolved around the complexity of the system and subsequent steep learning curve. This system was built with very little prior knowledge of the software techniques and hardware used. A number of skills and techniques were learnt, as well as a large knowledge base. As well as new information, skills that had been learnt previously were used to create an enhanced system, which complies with multiple industry standards, is secure and is well documented. The complexity was managed through modular additions and improvements, and constant testing of correct functioning.
 
 This projects determined that the use of cloud services for aiding data analysis in a search and rescue environment is a practical solution for reducing search time. However, although this system demonstrates that the solution is viable and could be implemented, further work is needed on analytical cloud services before a system could be used. 
 The major issue discovered in this project was suitability of response content from cloud services. The Image Recognition service did not return a great variety of suitable labels, and often returned completely incorrect labels. Even for ideal input images, a response did not have a high level of confidence. The Speech-to-Text service was noise susceptible, whilst textual Tone Analysis services did not work well on small inputs. There is potential to improve the response of services, through training and enhancements. However, improvement of the services is beyond the scope of this project, and can only be achieved by IBM. 
@@ -1113,25 +1126,13 @@ It is likely that a future implementation will use a mixture of onboard processi
 
 
 
-
-
-\section{Old}
-
-The use of cloud services for aiding data analysis in a search and rescue environment is a practical solution for reducing search time. However, although this system demonstrates that the solution is viable and could be implemented, further work is needed on analytical cloud services before a system could be used. 
-
-Although a latency time of 10 seconds is acceptable, it is not ideal. This is not in terms of absolute time, but is related to the fact that the drone will have moved during this time. A command to stop the drone will stop it 10 seconds away from the trigger event, which depending on drone speed could be a considerable distance. Design choices throughout the project's development aimed at reducing this time through asynchronicity and concurrency.
-
-However, the major issue discovered in this project was suitability of response content from cloud services. Image Recognition services did not return a great variety of suitable labels, and the often returned completely incorrect labels. Even for ideal input images, a response did not have a high level of confidence. There is potential to improve the response of services, through training and enhancements. However, improvement of the services is beyond the scope of this project, and can only be achieved by IBM. 
-
-Nevertheless, this system can support a small fleet of drones, which if preprogrammed with routes could collaboratively cover a large area in a fraction of the time manual human inspection would take. This could, with further development, become a valuable tool in a search-and-rescue situation. 
-
-The difficulties faced in this project mostly revolved around the steep learning curve and subsequent complexity of the system. This system was built with very little prior knowledge of the software techniques and hardware used. A number of skills and techniques were learnt, as well as a large knowledge base. As well as new information, skills that had been learnt previously were used to create an enhanced system, which complies with multiple industry standards, as well as being secure and well documented. The complexity was managed through modular additions and improvements, and constant testing of correct functioning.
-
-It is likely that a future implementation will use a mixture of onboard processing and cloud services, to gain the advantages of both and eliminate the challenges faced when only using one. In terms of this system, it met every specification goal and requirement, going beyond what was necessary in many aspects to result in a well designed, complex and viable system with potential for future development.
-
-
-
 \section{User Guide}\label{UserGuide}
+For the immediate future, a running implementation of the server should be available at \url{https://drone-nodes.eu-gb.mybluemix.net}. It will have no drone permanently attached, but this can easily be established on request. The dashboard can be accessed at \url{https://drone-nodes.eu-gb.mybluemix.net/dashboard/app}, and this and the API can be accessed with the following ADMIN level credentials:
+\begin{itemize}
+	\item Username: jake
+	\item Password: pass
+\end{itemize} 
+
 Each of the three main components, the drone, server and app, each have their own git repository, containing all source code required to run and test the systems. Raw results from testing and minor manipulation scripts are not included, but are available on request. Each repository has a README.md describing installation steps for use, including required dependencies, and basic usage. 
 
 The Raspberry Pi requires a Raspbian (or similar Debian) operating system running, and then the exact steps can be followed for installation and execution.
@@ -1177,8 +1178,10 @@ No specific development software is required, although the recommended software 
 
 
 \section{Appendix}
-
-\begin{table}[h]
+All code required for running the system is included in the Git repositories detailed in the User Guide.
+\subsubsection{Scenarios}
+The scenarios used to describe desired system behaviour, and used for system evaluation.
+\begin{table}[H]
 \caption{Search and Rescue Scenarios\label{scenarios}}
 \hyphenchar\font=-1
 \centering
@@ -1246,14 +1249,14 @@ No specific development software is required, although the recommended software 
 \end{tabularx}
 \end{table}
 
-\subsection{Assembled Drone}
-\begin{figure}[h]
+\subsubsection{Assembled Drone}
+\begin{figure}[H]
 \centering
 \caption{Image of Assembled Drone Frame (no Pi attached)\label{AssembledDrone}}
 \includegraphics[width=\textwidth]{Drone}
 \end{figure}
 
-\subsection{SQL Table Definitions} \label{SQLDefinitions}
+\subsubsection{SQL Table Definitions} \label{SQLDefinitions}
 \begin{center}
 \begin{lstlisting} 
 CREATE TABLE "USERS"
@@ -1279,8 +1282,8 @@ CREATE TABLE "DRONES"
 \end{lstlisting}
 \end{center}
 
-\subsection{REST API} \label{apdxRestApi}
-\subsubsection{Sensors}
+\subsubsection{REST API} \label{apdxRestApi}
+\paragraph{Sensors}
 \begin{center}
 	\begin{lstlisting}
 		GET /api/:dronename/sensors
@@ -1291,7 +1294,7 @@ CREATE TABLE "DRONES"
 \end{center}
 The sensors API endpoints are designed for the querying of historical data. They take a range of path parameters and return a JSON array of the relevant documents contained in the database. The primary use within this project is for the Android app to query and plot legacy data. The app has developed to now only use the longest sensor endpoint, but the rest are kept for completeness. This will, as is self-evident, return documents relating to a specific drone between a time window and of a certain type. Whilst URI query parameters rather than path parameters could have been used, this was avoided to ensure a more standard and simplistic API where as much as possible is defined in the path. A typical query would be `GET /api/pixhack/sensors/1465231987452/1465231997452/temperature`.
 
-\subsubsection{GPS}
+\paragraph{GPS}
 \begin{center}
 	\begin{lstlisting}
 		GET /api/:dronename/gps
@@ -1302,7 +1305,7 @@ The sensors API endpoints are designed for the querying of historical data. They
 The GPS endpoints are very similar to the sensors endpoints, but simply query the positionlog rather than the sensorlog database. The information should also be present in the sensorlog database, but this provides a lighter weight access point for position data, for instance for plotting historical routes. A typical query would be `GET /api/pixhack/gps/1465231987452/1465231997452`.
 
 
-\subsubsection{Images}
+\paragraph{Images}
 \begin{center}
 	\begin{lstlisting}
 		GET    /api/:dronename/images
@@ -1313,7 +1316,7 @@ The GPS endpoints are very similar to the sensors endpoints, but simply query th
 \end{center}
 The images endpoints are for file handling. Similar to the sensors endpoints, they can be used to obtain historical files, but also for file upload and deletion. These endpoints have two main uses within the project. Due to large files being unable to be transferred over MQTT, a HTTP method is required. Indeed, this is one of the reasons that the system has this REST API. The drone uses the POST method to upload captured image files, whilst the Android client uses the GET endpoint with the docID `latest` to retrieve the latest image. A typical query from the client would be `GET /api/pixhack/image/latest`, and from the drone would be `POST \{'image':@1465231987452.jpeg\} /api/pixhack/image/1465231987452`, as well as the body containing metadata such as the GPS location of the image. 
 
-\subsubsection{Audio}
+\paragraph{Audio}
 \begin{center}
 	\begin{lstlisting}
 		GET    /api/:dronename/audio
@@ -1334,7 +1337,7 @@ The first set of audio endpoints are similar to the image endpoints, for file tr
 This set of endpoints are websockets. These supply two audio streams for each drone; one (upload/listen) collects audio from the drone and broadcasts it to the listeners, and the other (talk/download) does the opposite. Having 4 end points, rather than two or even one, allows easy isolation of the data which can therefore be sent as pure binary audio, and means the scripting on the drone can have two separate threads to listen or send, preventing any issues with resource blocking. These were implemented to satisfy the evolving requirements of the system. 
 
 
-\subsubsection{Users}
+\paragraph{Users}
 \begin{center}
 	\begin{lstlisting}
 		GET    /api/users/:username
@@ -1344,7 +1347,7 @@ This set of endpoints are websockets. These supply two audio streams for each dr
 \end{center}
 The users endpoints are primarily for admin management of user accounts stored in the SQL database. Individual accounts can be created, queried, and deleted. User accounts are crucial to the api. Without a user account and subsequent cookie, a client cannot do any action on the api. These endpoints are more restrictive than the others. Only an ADMIN can POST a new user, and only an ADMIN or the user themself can GET or DELETE a username. 
 
-\subsubsection{Drones}
+\paragraph{Drones}
 \begin{center}
 	\begin{lstlisting}
 		GET    /api/drones
@@ -1355,7 +1358,7 @@ The users endpoints are primarily for admin management of user accounts stored i
 The drones endpoints are for management of registered drones in the SQL database. A user can request a list of their drones with a GET request, POST a new drone, or DELETE an existing drone. The creation and deletion of drones from the SQL database cascades to the Cloudant database, creating or deleting all relevant databases. The cookie values are used to identify the user for drone endpoints, and are incorporated into the SQL queries, restricting access for any client to their own registered devices. 
 
 
-\subsection{Android Fragments}
+\subsubsection{Android Fragments}
 Figure \ref{fig:AndroidScreenshots} shows a selection of screenshots from the Android app. These were taken around a minute after the drone established a connection.
 \begin{landscape}
 \begin{figure}[h]
@@ -1382,7 +1385,7 @@ Figure \ref{fig:AndroidScreenshots} shows a selection of screenshots from the An
 \end{figure}
 \end{landscape}
 
-\subsection{Dashboard Snapshot}\label{DashboardSnapshots}
+\subsubsection{Dashboard Snapshot}\label{DashboardSnapshots}
 \begin{figure}[h]
 \centering
 \caption{Snapshot of the Dashboard, 1 minute after a drone connected}
@@ -1391,7 +1394,7 @@ Figure \ref{fig:AndroidScreenshots} shows a selection of screenshots from the An
 
 
 
-\subsection{Mocha Testing}
+\subsubsection{Mocha Testing}
 This first code excerpt is a simple example of a Mocha test file, testing API endpoints. A function is defined and run before each test. The tests (`it`) are run sequentially, with the after hook handling cleanup.
 \begin{lstlisting} [label=mocha1]
 var server = require('../app.js');
@@ -1482,8 +1485,13 @@ describe("Fire", function () {
 });
 \end{lstlisting} 
 
+\subsubsection{Istanbul Output}
+\begin{figure}[H]
+\caption{Top-level Output From an Istanbul Run\label{fig:istanbulOutput}}
+\includegraphics[width=\textwidth]{Istanbul}
+\end{figure}
 
-\subsection{Image Recognition Testing}\label{ImageRecTesting}
+\subsubsection{Image Recognition Testing}\label{ImageRecTesting}
 Table \ref{tab:ImageRecTest} show the confidence values for each returned label for a range of input densities. The set of images used to generate this data were of the head and shoulders of a person sitting in a chair. 
 \begin{landscape}
 \begin{table}
@@ -1530,7 +1538,7 @@ Column &  Label & Column & Label & Column & Label\\
 \end{table}
 \end{landscape}
 
-\subsection{Latency Calculator}
+\subsubsection{Latency Calculator}
 The same data as plotted in the Results section, but with an increased Y axis range to show a more complete data set.  
 \begin{figure}[h]
 \caption{Latency Calculator: Bandwidth Against Latency With Range of File Sizes\label{fig:LatencyVsBandwidthMaxAxis}}
@@ -1538,7 +1546,7 @@ The same data as plotted in the Results section, but with an increased Y axis ra
 \end{figure}
 
 
-\subsection{Engineer Review From Industrial Contact}\label{JonReview}
+\subsubsection{Engineer Review From Industrial Contact}\label{JonReview}
 \begin{itshape}
 Jake is one of the most hard working, knowledgeable and talented engineers that I, as a Senior Inventor in IBM, have come across, in over 20 years of working worldwide.  This year year we posed a serious challenge that would have stretched any accomplished engineer. The challenge was to design, build and test a probe that could apply Cognitive capability into an emergency situation. Here it would be used to detect conditions hazardous to humans and locate those in distress. It would be designed to control  potentially many numbers of drones (so if one were destroyed - another could take over). All this Jake has done, in an utterly professional manner while demonstrating his astonishing flair through his craft.
 
@@ -1550,7 +1558,7 @@ As a final endorsement of Jake's ability and execution, let me say that the Prob
 
 That's an astonishing achievement, at any level.\end{itshape} -- John McNamara, Senior Inventor at IBM
 
-\subsection{IBM's Planned Future Work}\label{JonFuture}
+\subsubsection{IBM's Planned Future Work}\label{JonFuture}
 \begin{itshape}
 We are looking to modify the API services that provide the cognitive capability so that they are more responsive, or perhaps even have a local cognitive capability that the drone can access to reduce latency. I know of IBM Partners who are extremely keen on investigating the drone that Jake has built and are looking to see if they can emulate what Jake has achieved for their own Unmanned Aerial Craft, which will be deployed to assist in Search and Rescue. This is an epic achievement, which will be evolved and modified by engineers all over the world to suit their own bespoke purposes.\end{itshape} -- John McNamara, Senior Inventor at IBM.
 
